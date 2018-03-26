@@ -1,5 +1,5 @@
 <template>
-  <q-layout ref="layout" view="LHr LpR lFf" reveal>
+  <q-layout ref="layout" view="LHr LpR lFf">
     <q-transition appear leave="fadeOut" duration="1000">
       <q-toolbar slot="header">
         <q-btn flat @click="$refs.layout.toggleLeft()">
@@ -28,6 +28,10 @@
         <q-side-link replace item to="/main/user">
           <q-item-side icon="mood" />
           <q-item-main label="个人中心"/>
+        </q-side-link>
+        <q-side-link replace item to="/main/hello">
+          <q-item-side icon="mood" />
+          <q-item-main label="测试"/>
         </q-side-link>
       </div>
 

@@ -19,15 +19,26 @@ Vue.use(Quasar, {
     directives: All
 })
 
-Vue.config.productionTip = false
-
-
 if (__THEME === 'mat') {
     require('quasar-extras/roboto-font')
 }
 import 'quasar-extras/material-icons'
 import 'quasar-extras/fontawesome'
 import 'quasar-extras/animate'
+
+
+import VueAMap from 'vue-amap';
+import { lazyAMapApiLoaderInstance } from 'vue-amap';
+Vue.use(VueAMap);
+VueAMap.initAMapApiLoader({
+    key: '1f26ad83f6bc2becbde2bd710921173e',
+    plugin: ['AMap.Autocomplete', 'AMap.PlaceSearch', 'AMap.Scale', 'AMap.OverView', 'AMap.ToolBar', 'AMap.MapType', 'AMap.PolyEditor', 'AMap.CircleEditor', 'AMap.Geocoder'],
+    v: '1.4.4'
+});
+
+
+
+
 import axios from 'axios'
 Vue.prototype.$http = axios.create({ baseURL: 'http://app.hwlantian.com', withCredentials: true })
     // Vue.prototype.$http = axios.create({
@@ -35,6 +46,8 @@ Vue.prototype.$http = axios.create({ baseURL: 'http://app.hwlantian.com', withCr
     //     withCredentials: true
     // })
 
+
+Vue.config.productionTip = false
 Quasar.start(() => {
     /* eslint-disable no-new */
     new Vue({
