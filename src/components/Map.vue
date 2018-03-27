@@ -2,95 +2,107 @@
   <div class="layout-padding map">
     <div class="title">
       <q-icon name="fa-home" size="25px" color="blue" />&nbsp;当前位置:
-      <q-btn flat>地图显示</q-btn>
+      <q-btn flat @click="status = 0">地图显示</q-btn>
+      <span v-show="status === 1">> <q-btn flat>设备详情</q-btn></span>
     </div>
 
-
-    <q-list>
-      <q-list-header>
-        <h5>设备总览</h5>
-      </q-list-header>
-      <div class="row">
-        <div class="col-xs-12 col-sm-4 col-md-4">
-          <q-card color="blue-6">
-            <q-card-title>当前设备总数</q-card-title>
-            <q-card-main class="text-center">
-              <h5>{{total}} 台</h5>
-            </q-card-main>
-          </q-card>
-        </div>
-        <div class="col-xs-12 col-sm-4 col-md-4">
-          <q-card color="green-6">
-            <q-card-title>设备在线率</q-card-title>
-            <q-card-main class="text-center">
-              <h5>{{online}} %</h5>
-            </q-card-main>
-          </q-card>
-        </div>
-        <div class="col-xs-12 col-sm-4 col-md-4">
-          <q-card color="red-6">
-            <q-card-title>设备故障数</q-card-title>
-            <q-card-main class="text-center">
-              <h5>{{error}} 台</h5>
-            </q-card-main>
-          </q-card>
-        </div>
-      </div>
-    </q-list>
-
-    <q-list>
-      <q-list-header class="row justify-between">
-        <h5>设备地区分布</h5>
-        <q-search v-model="searchKey" placeholder="输入设备名称或设备ID">
-          <q-autocomplete @search="searchDevice" :max-results='99' :debounce='800' />
-        </q-search>        
-      </q-list-header> 
-
-      <div class="amap-wrapper">
-        <el-amap vid="amapDemo" :zoom="map.zoom" :center="map.center" class="amap-demo">
-          <el-amap-marker v-for="marker in markers" :position="marker.position" :events="marker.events" :icon="marker.icon" :key="marker.id"></el-amap-marker>
-          <el-amap-text v-for="(marker,index) in markers" :text="addressText" :offset="[0,-45]" :position="marker.position" :visible="marker.showText" :key="'text'+marker.id"></el-amap-text>
-          <el-amap-info-window v-for="(marker,index) in markers" :offset="[0,-30]" :position="marker.position" :visible="marker.showInfo" :content="addressInfo" :key="'info'+marker.id"></el-amap-info-window>
-        </el-amap>
-        
-        <q-slide-transition>
-          <div class="panel absolute-top-right bg-white" v-show="panelVisible"> 
-            <q-list>
-              <q-list-header class="row justify-between">
-                <h6>设备{{deviceId}}</h6>
-                <q-icon name="close" @click="panelVisible = false" />
-                </q-list-header>
-                <q-item-separator />
-              <q-item>
-                <q-icon name="location_on" />
-                {{addressInfo}}
-              </q-item>
-              <q-item-separator />
-              <q-item>
-                <q-item-side class="text-bold text-red">AQI</q-item-side>
-                <q-item-main class="text-bold text-red">233</q-item-main>
-                <q-item-side right><div class="rank text-white bg-red">严重污染</div></q-item-side>
-              </q-item>
-              <q-item-separator />
-              <q-list-header>设备数据</q-list-header>
-              <q-item v-for="(item,index) in dataList">
-                <q-item-side>{{item.type}}</q-item-side>
-                <q-item-main>{{item.data}}</q-item-main>
-                <q-item-side>重度污染</q-item-side>
-              </q-item>
-              <q-item><q-item-main class="text-center"><q-btn color="primary">查看详情</q-btn></q-item-main></q-item>
-            </q-list>
+    <div v-if="status === 0">
+      <q-list>
+        <q-list-header>
+          <h5>设备总览</h5>
+        </q-list-header>
+        <div class="row">
+          <div class="col-xs-12 col-sm-4 col-md-4">
+            <q-card color="blue-6">
+              <q-card-title>当前设备总数</q-card-title>
+              <q-card-main class="text-center">
+                <h5>{{total}} 台</h5>
+              </q-card-main>
+            </q-card>
           </div>
-        </q-slide-transition>
-      </div>
-    </q-list>
+          <div class="col-xs-12 col-sm-4 col-md-4">
+            <q-card color="green-6">
+              <q-card-title>设备在线率</q-card-title>
+              <q-card-main class="text-center">
+                <h5>{{online}} %</h5>
+              </q-card-main>
+            </q-card>
+          </div>
+          <div class="col-xs-12 col-sm-4 col-md-4">
+            <q-card color="red-6">
+              <q-card-title>设备故障数</q-card-title>
+              <q-card-main class="text-center">
+                <h5>{{error}} 台</h5>
+              </q-card-main>
+            </q-card>
+          </div>
+        </div>
+      </q-list>
+
+      <q-list>
+        <q-list-header class="row justify-between">
+          <h5>设备地区分布</h5>
+          <q-search v-model="searchKey" placeholder="输入设备名称或设备ID">
+            <q-autocomplete @search="searchDevice" :max-results='99' :debounce='800' />
+          </q-search>        
+        </q-list-header> 
+
+        <div class="amap-wrapper">
+          <el-amap vid="amapDemo" :zoom="map.zoom" :center="map.center" class="amap-demo">
+            <el-amap-marker v-for="marker in markers" :position="marker.position" :events="marker.events" :icon="marker.icon" :key="marker.id"></el-amap-marker>
+            <el-amap-text v-for="(marker,index) in markers" :text="addressText" :offset="[0,-45]" :position="marker.position" :visible="marker.showText" :key="'text'+marker.id"></el-amap-text>
+            <el-amap-info-window v-for="(marker,index) in markers" :offset="[0,-30]" :position="marker.position" :visible="marker.showInfo" :content="addressInfo" :key="'info'+marker.id"></el-amap-info-window>
+          </el-amap>
+          
+          <q-slide-transition>
+            <div class="panel absolute-top-right bg-white" v-show="panelVisible"> 
+              <q-list>
+                <q-list-header class="row justify-between">
+                  <h6>设备{{deviceId}}</h6>
+                  <q-icon name="close" @click="panelVisible = false" />
+                  </q-list-header>
+                  <q-item-separator />
+                <q-item>
+                  <q-icon name="location_on" />
+                  {{addressInfo}}
+                </q-item>
+                <q-item-separator />
+                <q-item>
+                  <q-item-side class="text-bold text-red">AQI</q-item-side>
+                  <q-item-main class="text-bold text-red">233</q-item-main>
+                  <q-item-side right><div class="rank text-white bg-red">严重污染</div></q-item-side>
+                </q-item>
+                <q-item-separator />
+                <q-list-header>设备数据</q-list-header>
+                <q-item v-for="(item,index) in dataList" :key="index">
+                  <q-item-side>{{item.type}}</q-item-side>
+                  <q-item-main>{{item.data}}</q-item-main>
+                  <q-item-side>重度污染</q-item-side>
+                </q-item>
+                <q-item><q-item-main class="text-center"><q-btn color="primary" @click="status = 1">查看详情</q-btn></q-item-main></q-item>
+              </q-list>
+            </div>
+          </q-slide-transition>
+        </div>
+      </q-list>
+    </div>
+
+    <div v-else-if="status === 1">
+      <device-panel></device-panel>
+    </div>
+
   </div>
 </template>
 
 <script>
 import { deviceService } from "api/index";
+import devicePanel from "./Device";
 export default {
+  components: {
+    devicePanel
+  },
   data: () => ({
+    status: 0,
     total: 233,
     online: 23,
     error: 13,

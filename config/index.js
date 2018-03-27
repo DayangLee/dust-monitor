@@ -10,7 +10,8 @@ module.exports = {
         'api': path.resolve(__dirname, '../src/api'),
         'lib': path.resolve(__dirname, '../src/lib'),
         statics: path.resolve(__dirname, '../src/statics'),
-        variables: path.resolve(__dirname, '../src/themes/quasar.variables.styl')
+        variables: path.resolve(__dirname, '../src/themes/quasar.variables.styl'),
+        vue: 'vue/dist/vue.js'
     },
 
     // Progress Bar Webpack plugin format

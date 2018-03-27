@@ -36,9 +36,6 @@ VueAMap.initAMapApiLoader({
     v: '1.4.4'
 });
 
-
-
-
 import axios from 'axios'
 Vue.prototype.$http = axios.create({ baseURL: 'http://app.hwlantian.com', withCredentials: true })
     // Vue.prototype.$http = axios.create({
