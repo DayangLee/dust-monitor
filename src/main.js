@@ -26,6 +26,16 @@ import 'quasar-extras/material-icons'
 import 'quasar-extras/fontawesome'
 import 'quasar-extras/animate'
 
+import {
+    Button,
+    DatePicker,
+    TimeSelect,
+    TimePicker,
+} from 'element-ui';
+Vue.use(Button)
+Vue.use(DatePicker)
+Vue.use(TimeSelect)
+Vue.use(TimePicker)
 
 import VueAMap from 'vue-amap';
 import { lazyAMapApiLoaderInstance } from 'vue-amap';

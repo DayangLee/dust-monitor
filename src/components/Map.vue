@@ -1,9 +1,14 @@
 <template>
   <div class="layout-padding map">
-    <div class="title">
-      <q-icon name="fa-home" size="25px" color="blue" />&nbsp;当前位置:
-      <q-btn flat @click="status = 0">地图显示</q-btn>
-      <span v-show="status === 1">> <q-btn flat>设备详情</q-btn></span>
+    <div class="title row justify-between">
+      <div>
+        <q-icon name="fa-home" size="25px" color="blue" />&nbsp;当前位置:
+        <q-btn flat @click="status = 0">地图显示</q-btn>
+        <span v-show="status === 1">> <q-btn flat>设备详情</q-btn></span>
+      </div>
+      <div v-show="status === 1">
+        <q-btn color="primary" @click="status = 0">返回</q-btn>
+      </div>
     </div>
 
     <div v-if="status === 0">

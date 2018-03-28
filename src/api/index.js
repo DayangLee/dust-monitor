@@ -2,8 +2,8 @@ import axios from 'axios'
 
 // 创建 axios 实例
 const $http = axios.create({
-    baseURL: 'http://web.test.hw99lt.com:8080',
-    // baseURL: 'http://app.hwlantian.com',
+    // baseURL: 'http://web.test.hw99lt.com:8080',
+    baseURL: 'http://app.hwlantian.com',
     withCredentials: true
 })
 
@@ -144,6 +144,9 @@ export const deviceService = {
 export const userService = {
     getUser: function() {
         return $http.get('/user')
+    },
+    logout: function() {
+        return $http.post("/user/logout")
     },
     getUserInfo: function(accountId) {
         return $http.get('/user/info', {

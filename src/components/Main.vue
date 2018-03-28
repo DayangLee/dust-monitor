@@ -41,6 +41,7 @@
 </template>
 
 <script type="text/ecmascript-6">
+import { userService } from "api/index";
 export default {
   data() {
     return {
@@ -49,7 +50,10 @@ export default {
   },
   methods: {
     logout() {
-      alert("logout");
+      const self = this;
+      userService.logout().then(r => {
+        this.$router.replace("/login");
+      });
     },
     qrcodescan() {
       Dialog.create({
@@ -59,13 +63,14 @@ export default {
       });
     }
   },
-  beforeCreate() {
-    this.$http
-      .get("/user")
+  beforeMount() {
+    userService
+      .getUser()
       .then(r => {})
-      .catch(e => {});
-  },
-  beforeMount() {}
+      .catch(e => {
+        this.$router.replace("/login");
+      });
+  }
 };
 </script>
 
