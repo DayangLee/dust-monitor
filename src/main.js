@@ -47,11 +47,11 @@ VueAMap.initAMapApiLoader({
 });
 
 import axios from 'axios'
-Vue.prototype.$http = axios.create({ baseURL: 'http://app.hwlantian.com', withCredentials: true })
-    // Vue.prototype.$http = axios.create({
-    //     baseURL: 'http://web.test.hw99lt.com:8080',
-    //     withCredentials: true
-    // })
+// Vue.prototype.$http = axios.create({ baseURL: 'http://app.hwlantian.com', withCredentials: true })
+Vue.prototype.$http = axios.create({
+    baseURL: 'http://web.test.hw99lt.com:8080',
+    withCredentials: true
+})
 
 
 Vue.config.productionTip = false

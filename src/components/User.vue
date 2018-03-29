@@ -10,7 +10,7 @@
           <h5>用户信息</h5>
         </q-list-header>
         <q-item-separator />
-        <q-collapsible group="group" :label="`<div class='row justify-start'><div style='width:50px;'>用户名</div><div style='margin-left:50px'>${userInfo.authentication.name}</div></div>`" :sparse="true" @open="open('username')" @close="close('username')">
+        <q-collapsible group="group" :label="`<div class='row justify-start'><div style='width:50px;'>用户名</div><div style='margin-left:50px'>${userInfo.authentication.name}</div></div>`" :sparse="true" @open="open('username')" @close="cancelVerificationTimer">
           <div>
             <div v-if="verifiedList.length === 0" class="row">
               <div class="offset-lg-2 offset-md-2 offset-sm-2 row" style="margin-bottom:20px;">
@@ -21,22 +21,22 @@
               <div class="item row justify-around items-center">
                 <div class="name">用户名</div>
                 <div class="input">
-                  <q-input autofocus class="userInput" placeholder="用户名由字母、数字或下划线组成，长度至少为6位" v-model="newName" type="text" />
+                  <q-input autofocus class="userInput" placeholder="由字母、数字或下划线组成，长度至少6位" v-model="newName" type="text" />
                 </div>
               </div>
 
               <div class="item row justify-around items-center">
                 <div class="name">验证码</div>
                 <div class="input">
-                  <q-input autofocus class="userInput" v-model="vcode" type="number" />
+                  <q-input autofocus class="userInput" v-model="vcode" type="text" />
                 </div>
               </div>
               
 
               <div class="btn-item row">
-                <div class="offset-lg-3 offset-md-3 offset-sm-3 offser-xs-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
+                <div class="offset-lg-2 offset-md-2 offset-sm-2 col-lg-3 col-md-3 col-sm-3 col-xs-12 btn">
                   <q-btn class="full-width" v-show="hasNocode" @click="sendVcode('username')">发送验证码</q-btn>
-                  <q-btn class="full-width" v-show="!hasNocode" loader :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('username')">
+                  <q-btn class="full-width" v-show="!hasNocode" loader dark-percentage :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('username')">
                     再次发送验证码
                     <span v-if="verificationProcessing" slot="loading">
                       <q-spinner-facebook class="on-left" />
@@ -45,7 +45,7 @@
                   </q-btn>
                 </div>
                 <div class="offset-lg-1 offset-md-1 offset-sm-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                  <q-btn class="full-width" color="primary">修改</q-btn>
+                  <q-btn class="full-width" color="primary" :disable="disabled" @click="change">修改</q-btn>
                 </div>
               </div>
 
@@ -53,48 +53,47 @@
           </div>
         </q-collapsible>
 
-        <q-collapsible group="group" :label="`<div class='row justify-start'><div style='width:50px;'>昵称</div><div style='margin-left:50px'>${userInfo.customize.nickname}</div></div>`" :sparse="true" @open="open('nickname')" @close="close('nickname')">
+        <q-collapsible group="group" :label="`<div class='row justify-start'><div style='width:50px;'>昵称</div><div style='margin-left:50px'>${userInfo.customize.nickname}</div></div>`" :sparse="true" @open="open('nickname')" @close="cancelVerificationTimer">
           <div>
             <div class="item row justify-around items-center">
               <div class="name">昵称</div>
               <div class="input">
-                <q-input autofocus class="userInput" v-model="newNickName" type="text" />
+                <q-input autofocus class="userInput" v-model="newNickName" type="text" @keyup.enter="change" />
               </div>
             </div>
 
             <div class="btn-item row">
               <div class="offset-lg-3 offset-md-3 offset-sm-3 offser-xs-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                <q-btn class="full-width" @click="clear('nickname')">取消</q-btn>
+                <q-btn class="full-width" @click="newNickName = null">取消</q-btn>
               </div>
               <div class="offset-lg-1 offset-md-1 offset-sm-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                <q-btn class="full-width" color="primary">修改</q-btn>
+                <q-btn class="full-width" color="primary" :disable="disabled" @click="change">修改</q-btn>
               </div>
             </div>
           </div>
         </q-collapsible>
 
-        <q-collapsible group="group" :label="phoneString" :sparse="true" @open="open('phone')" @close="close('phone')">
+        <q-collapsible group="group" :label="phoneString" :sparse="true" @open="open('phone')" @close="cancelVerificationTimer">
           <div>
-            <div v-if="verifiedList.length === 0">
               <div class="item row justify-around items-center">
                 <div class="name">手机</div>
                 <div class="input">
-                  <q-input autofocus class="userInput" placeholder="用户名由字母、数字或下划线组成，长度至少为6位" v-model="newName" type="text" />
+                  <q-input autofocus class="userInput" v-model="newPhone" type="text" />
                 </div>
               </div>
 
               <div class="item row justify-around items-center">
                 <div class="name">验证码</div>
                 <div class="input">
-                  <q-input autofocus class="userInput" v-model="vcode" type="number" />
+                  <q-input autofocus class="userInput" v-model="vcode" type="text" />
                 </div>
               </div>
               
 
               <div class="btn-item row">
-                <div class="offset-lg-3 offset-md-3 offset-sm-3 offser-xs-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                  <q-btn class="full-width" v-show="hasNocode" @click="sendVcode('username')">发送验证码</q-btn>
-                  <q-btn class="full-width" v-show="!hasNocode" loader :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('username')">
+                <div class="offset-lg-2 offset-md-2 offset-sm-2 col-lg-3 col-md-3 col-sm-3 col-xs-12 btn">
+                  <q-btn class="full-width" v-show="hasNocode" @click="sendVcode('phone')">发送验证码</q-btn>
+                  <q-btn class="full-width" v-show="!hasNocode" loader dark-percentage  :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('phone')">
                     再次发送验证码
                     <span v-if="verificationProcessing" slot="loading">
                       <q-spinner-facebook class="on-left" />
@@ -103,56 +102,94 @@
                   </q-btn>
                 </div>
                 <div class="offset-lg-1 offset-md-1 offset-sm-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                  <q-btn class="full-width" color="primary">完成</q-btn>
+                  <q-btn class="full-width" color="primary" :disable="disabled" @click="change">{{ this.userInfo.verified.phone ? '修改' : '完成'}}</q-btn>
                 </div>
               </div>
-            </div>
-
-            <div v-else>       
-              <div class="item row justify-around items-center">
-                <div class="name">手机</div>
-                <div class="input">
-                  <q-input autofocus class="userInput" v-model="newName" type="text" />
-                </div>
-              </div>
-
-              <div class="item row justify-around items-center">
-                <div class="name">验证码</div>
-                <div class="input">
-                  <q-input autofocus class="userInput" v-model="vcode" type="number" />
-                </div>
-              </div>
-              
-
-              <div class="btn-item row">
-                <div class="offset-lg-3 offset-md-3 offset-sm-3 offser-xs-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                  <q-btn class="full-width" v-show="hasNocode" @click="sendVcode('username')">发送验证码</q-btn>
-                  <q-btn class="full-width" v-show="!hasNocode" loader :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('username')">
-                    再次发送验证码
-                    <span v-if="verificationProcessing" slot="loading">
-                      <q-spinner-facebook class="on-left" />
-                        再次发送验证码
-                    </span>
-                  </q-btn>
-                </div>
-                <div class="offset-lg-1 offset-md-1 offset-sm-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
-                  <q-btn class="full-width" color="primary" v-if="this.userInfo.verified.phone">修改</q-btn>
-                  <q-btn class="full-width" color="primary" v-else>完成</q-btn>
-                </div>
-              </div>
-
-            </div>
           </div>
         </q-collapsible>
         
-        <q-collapsible group="group" :label="emailString" :sparse="true" @open="open('email')" @close="close('email')">
+        <q-collapsible group="group" :label="emailString" :sparse="true" @open="open('email')" @close="cancelVerificationTimer">
           <div>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+              <div class="item row justify-around items-center">
+                <div class="name">邮箱</div>
+                <div class="input">
+                  <q-input autofocus class="userInput" v-model="newEmail" type="text" />
+                </div>
+              </div>
+
+              <div class="item row justify-around items-center">
+                <div class="name">验证码</div>
+                <div class="input">
+                  <q-input autofocus class="userInput" v-model="vcode" type="text" />
+                </div>
+              </div>
+              
+              <div class="btn-item row">
+                <div class="offset-lg-2 offset-md-2 offset-sm-2 col-lg-3 col-md-3 col-sm-3 col-xs-12 btn">
+                  <q-btn class="full-width" v-show="hasNocode" @click="sendVcode('email')">发送验证码</q-btn>
+                  <q-btn class="full-width" v-show="!hasNocode" loader dark-percentage  :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('email')">
+                    再次发送验证码
+                    <span v-if="verificationProcessing" slot="loading">
+                      <q-spinner-facebook class="on-left" />
+                        再次发送验证码
+                    </span>
+                  </q-btn>
+                </div>
+                <div class="offset-lg-1 offset-md-1 offset-sm-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
+                  <q-btn class="full-width" color="primary" :disable="disabled" @click="change">{{ this.userInfo.verified.email ? '修改' : '完成'}}</q-btn>
+                </div>
+              </div>
           </div>
         </q-collapsible>
-        <q-collapsible group="group" :label="`<div class='row justify-start'><div style='width:50px;'>密码</div><div style='margin-left:50px'>******</div></div>`" :sparse="true" @open="open('password')" @close="close('password')">
+
+        <q-collapsible group="group" :label="`<div class='row justify-start'><div style='width:50px;'>密码</div><div style='margin-left:50px'>******</div></div>`" :sparse="true" @open="open('password')" @close="cancelVerificationTimer">
           <div>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            <div v-if="verifiedList.length === 0" class="row">
+              <div class="offset-lg-2 offset-md-2 offset-sm-2 row" style="margin-bottom:20px;">
+                <q-icon name="warning" color="warning" /><div class="text-warning">更改密码请先验证手机或邮箱</div>
+              </div>
+            </div>
+
+            <div v-else>
+              <div class="item row justify-around items-center">
+                <div class="name">新密码</div>
+                <div class="input">
+                  <q-input autofocus class="userInput" placeholder="由字母、数字组成，长度至少6位"  v-model="newPassword" type="password" />
+                </div>
+              </div>
+
+            <div class="item row justify-around items-center">
+                <div class="name">确认密码</div>
+                <div class="input">
+                  <q-input autofocus class="userInput" v-model="newPasswordConfig" type="password" />
+                </div>
+              </div>
+
+              <div class="item row justify-around items-center">
+                <div class="name">验证码</div>
+                <div class="input">
+                  <q-input autofocus class="userInput" v-model="vcode" type="text" />
+                </div>
+              </div>
+              
+
+              <div class="btn-item row">
+                <div class="offset-lg-2 offset-md-2 offset-sm-2 col-lg-3 col-md-3 col-sm-3 col-xs-12 btn">
+                  <q-btn class="full-width" v-show="hasNocode" @click="sendVcode('password')">发送验证码</q-btn>
+                  <q-btn class="full-width" v-show="!hasNocode" loader dark-percentage  :percentage="verificationPercentage" v-model="verificationProcessing" @click="sendVcode('password')">
+                    再次发送验证码
+                    <span v-if="verificationProcessing" slot="loading">
+                      <q-spinner-facebook class="on-left" />
+                        再次发送验证码
+                    </span>
+                  </q-btn>
+                </div>
+                <div class="offset-lg-1 offset-md-1 offset-sm-1 col-lg-2 col-md-2 col-sm-2 col-xs-12 btn">
+                  <q-btn class="full-width" color="primary" :disable="disabled" @click="change">修改</q-btn>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </q-collapsible>
       </q-list>
@@ -170,7 +207,10 @@
 
 <script>
 import { userService } from "api/index";
-import { Dialog, Toast } from "quasar";
+import { Dialog, Toast, Alert } from "quasar";
+import "quasar-extras/animate/bounceInRight.css";
+import "quasar-extras/animate/bounceOutRight.css";
+import md5 from "js-md5";
 export default {
   data: () => ({
     status: "username",
@@ -178,22 +218,20 @@ export default {
     userInfo: {
       id: null,
       authentication: {
-        name: null,
-        phone: null,
-        email: null
+        name: "",
+        phone: "",
+        email: ""
       },
       verified: {
         phone: null,
         email: null
       },
       customize: {
-        nickname: null
+        nickname: ""
       }
     },
     verified: [],
     hasNocode: true,
-    hasNocode1: true,
-    hasNocode2: true,
     verificationPercentage: 0,
     verificationProcessing: false,
     verificationInterval: null,
@@ -244,7 +282,7 @@ export default {
         } else {
           return true;
         }
-      } else if (this.status === "name") {
+      } else if (this.status === "username") {
         if (
           this.newName &&
           this.vcode &&
@@ -282,6 +320,8 @@ export default {
           this.newPassword &&
           this.newPasswordConfig &&
           this.vcode &&
+          this.newPassword.length >= 6 &&
+          this.newPasswordConfig.length >= 6 &&
           this.vcode.length === 6
         ) {
           return false;
@@ -289,31 +329,6 @@ export default {
           return true;
         }
       }
-    },
-    vcodebtnShow: function() {
-      let a;
-      if (this.status === "nickname") {
-        a = false;
-      } else if (this.status === "name" || this.status === "password") {
-        a = this.verifiedList.length === 0 ? false : true;
-      } else if (this.status === "phone" || this.status === "email") {
-        a = true;
-      }
-      return a;
-    },
-    changebtnShow: function() {
-      let a;
-      if (this.status === "nickname") {
-        a = true;
-      } else if (this.status === "name" || this.status === "password") {
-        a = this.verifiedList.length === 0 ? false : true;
-      } else if (this.status === "phone") {
-        a = this.userInfo.verified.indexOf("phone") === -1 ? false : true;
-      } else if (this.status === "email") {
-        a = this.userInfo.verified.indexOf("email") === -1 ? false : true;
-      }
-      console.log(a);
-      return a;
     },
     verifiedList: function() {
       let list = [];
@@ -361,14 +376,7 @@ export default {
   },
   methods: {
     open(e) {
-      console.log(e);
-      this.status === "username";
-    },
-    close(e) {
-      console.log(e);
-      this.verificationPercentage = 0;
-      this.verificationProcessing = false;
-      this.verificationInterval = null;
+      this.status = e;
     },
     pop(title) {
       const dialog = Dialog.create({
@@ -387,10 +395,39 @@ export default {
         dialog.close();
       }, 3000);
     },
-    clear(e) {
-      if (e === "nickname") {
-        this.newNickName = null;
-      }
+    successAlert(e) {
+      const alert = Alert.create({
+        html: e,
+        color: "positive",
+        icon: "done",
+        position: "top-center",
+        duration: 3000,
+        enter: "bounceInDown",
+        leave: "bounceOutUp"
+      });
+      setTimeout(function() {
+        if (alert) {
+          alert.dismiss();
+          return;
+        }
+      }, 3000);
+    },
+    errorAlert(e) {
+      const alert = Alert.create({
+        html: e,
+        color: "negative",
+        icon: "error_outline",
+        position: "top-center",
+        duration: 3000,
+        enter: "bounceInDown",
+        leave: "bounceOutUp"
+      });
+      setTimeout(function() {
+        if (alert) {
+          alert.dismiss();
+          return;
+        }
+      }, 3000);
     },
     sendVcode(e) {
       let key = "phone";
@@ -486,7 +523,7 @@ export default {
               this.send(key, value, text);
             }
           }
-        } else if (e === "username") {
+        } else if (e === "username" || e === "password") {
           key = this.verifiedObj.phone ? "phone" : "email";
           value = this.verifiedObj[key];
           text = key === "phone" ? "手机" : "邮箱";
@@ -516,11 +553,6 @@ export default {
       }
     },
     send(key, value, text, type) {
-      console.log(key);
-      console.log(value);
-      console.log(text);
-      // Toast.create.positive("更改室外数据源成功");
-
       if (key === "phone") {
         if (/^1(3|4|5|7|8)\d{9}$/.test(value)) {
           userService
@@ -528,13 +560,13 @@ export default {
             .then(r => {
               this.hasNocode = false;
               this.startVerificationTimer();
-              Toast.create.positive("验证码已发送至" + text + value);
+              this.successAlert("验证码已发送至" + text + value);
             })
             .catch(e => {
-              Toast.create.negative("验证码发送失败");
+              this.errorAlert("验证码发送失败");
             });
         } else {
-          Toast.create.negative("请输入正确的手机号");
+          this.errorAlert("请输入正确的手机号");
         }
       } else {
         if (value.includes("@")) {
@@ -543,17 +575,211 @@ export default {
             .then(r => {
               this.hasNocode = false;
               this.startVerificationTimer();
-              Toast.create.positive("验证码已发送至" + text + value);
+              this.successAlert("验证码已发送至" + text + value);
             })
             .catch(e => {
-              Toast.create.negative("验证码发送失败");
+              this.errorAlert("验证码发送失败");
             });
         } else {
-          Toast.create.negative("请输入正确的邮箱");
+          this.errorAlert("请输入正确的邮箱");
+        }
+      }
+    },
+    change() {
+      console.log(this.status);
+      if (this.status === "nickname" && this.newNickName) {
+        userService
+          .changeCustomize("nickname", this.newNickName)
+          .then(r => {
+            this.userInfo.customize.nickname = this.newNickName.trim();
+            this.successAlert("昵称修改成功");
+          })
+          .catch(e => {
+            this.errorAlert("昵称修改成功");
+          });
+      } else if (this.status === "username" && this.newName && this.vcode) {
+        const username = this.userInfo.verified[this.vcodeSendTo];
+
+        userService
+          .changeAuthentication("name", this.newName, username, this.vcode)
+          .then(r => {
+            this.successAlert("用户名修改成功");
+            this.userInfo.authentication.name = this.newName.trim();
+            this.cancelVerificationTimer();
+          })
+          .catch(e => {
+            if (e.response && e.response.status === 403) {
+              this.errorAlert("验证码错误");
+            } else if (e.response && e.response.status === 409) {
+              this.errorAlert("该用户名已被注册");
+            } else {
+              this.errorAlert("用户名修改失败");
+            }
+          });
+      } else if (this.status === "phone" && this.newPhone && this.vcode) {
+        if (this.newPhone === this.userInfo.authentication.phone) {
+          // 验证手机号
+          userService
+            .verified(this.newPhone, this.vcode)
+            .then(r => {
+              this.successAlert("手机验证成功");
+              this.userInfo.verified.phone = this.newPhone;
+              this.cancelVerificationTimer();
+            })
+            .catch(e => {
+              if (e.response && e.response.status === 403) {
+                this.errorAlert("验证码错误");
+              } else {
+                this.errorAlert("手机验证失败");
+              }
+            });
+        } else if (this.newPhone !== this.userInfo.authentication.phone) {
+          let username;
+
+          if (this.userInfo.verified.phone) {
+            // 修改验证过的手机号
+            username = this.userInfo.verified[this.vcodeSendTo];
+          } else {
+            // 添加手机号
+            if (this.verifiedList.length === 0) {
+              username = this.newPhone;
+            } else {
+              username = this.userInfo.authentication[this.vcodeSendTo];
+            }
+          }
+
+          userService
+            .exchangeVerification(username, this.vcode)
+            .then(r => {
+              const codeExchanged = r.data.value;
+              userService
+                .changeAuthentication(
+                  "phone",
+                  this.newPhone,
+                  username,
+                  codeExchanged
+                )
+                .then(r => {
+                  this.successAlert("手机号修改成功");
+                  this.userInfo.authentication.phone = this.newPhone;
+                  this.cancelVerificationTimer();
+                })
+                .catch(e => {
+                  if (e.response && e.response.status === 409) {
+                    this.errorAlert("该手机号已被注册");
+                  } else if (e.response && e.response.status === 403) {
+                    this.errorAlert("验证码错误");
+                  } else {
+                    this.errorAlert("手机号修改失败");
+                  }
+                });
+            })
+            .catch(e => {
+              if (e.response && e.response.status === 403) {
+                this.errorAlert("验证码错误");
+              } else {
+                this.errorAlert("出错了");
+              }
+            });
+        }
+      } else if (this.status === "email" && this.newEmail && this.vcode) {
+        if (this.newEmail === this.userInfo.authentication.email) {
+          // 验证邮箱
+          userService
+            .verified(this.newEmail, this.vcode)
+            .then(r => {
+              this.successAlert("邮箱验证成功");
+              this.userInfo.verified.email = this.newEmail;
+              this.cancelVerificationTimer();
+            })
+            .catch(e => {
+              if (e.response && e.response.status === 403) {
+                this.errorAlert("验证码错误");
+              } else {
+                this.errorAlert("邮箱验证失败");
+              }
+            });
+        } else if (this.newEmail !== this.userInfo.authentication.email) {
+          let username;
+
+          if (this.userInfo.verified.email) {
+            // 修改验证过的邮箱
+            username = this.userInfo.authentication[this.vcodeSendTo];
+          } else {
+            // 添加邮箱
+            if (this.verifiedList.length === 0) {
+              username = this.newEmail;
+            } else {
+              username = this.userInfo.authentication[this.vcodeSendTo];
+            }
+          }
+
+          userService
+            .exchangeVerification(username, this.vcode)
+            .then(r => {
+              const codeExchanged = r.data.value;
+              userService
+                .changeAuthentication(
+                  "email",
+                  this.newEmail,
+                  username,
+                  codeExchanged
+                )
+                .then(r => {
+                  this.successAlert("邮箱修改成功");
+                  this.userInfo.authentication.email = this.newEmail;
+                  this.cancelVerificationTimer();
+                })
+                .catch(e => {
+                  if (e.response && e.response.status === 409) {
+                    this.errorAlert("该邮箱已被注册");
+                  } else if (e.response && e.response.status === 403) {
+                    this.errorAlert("验证码错误");
+                  } else {
+                    this.errorAlert("邮箱修改失败");
+                  }
+                });
+            })
+            .catch(e => {
+              if (e.response && e.response.status === 403) {
+                this.errorAlert("验证码错误");
+              } else {
+                this.errorAlert("出错了");
+              }
+            });
+        }
+      } else if (this.status === "password") {
+        if (
+          this.newPassword === this.newPasswordConfig &&
+          this.newPassword.length >= 6
+        ) {
+          userService
+            .changeAuthentication(
+              "password",
+              md5(this.newPassword),
+              this.userInfo.verified[this.vcodeSendTo],
+              this.vcode
+            )
+            .then(r => {
+              this.successAlert("密码修改成功");
+              this.cancelVerificationTimer();
+            })
+            .catch(e => {
+              if (e.response && e.response.status === 403) {
+                this.errorAlert("验证码错误");
+              } else {
+                this.errorAlert("密码修改失败");
+              }
+            });
+        } else if (this.newPassword.length < 6) {
+          this.errorAlert("密码至少为6位");
+        } else if (this.newPassword !== this.newPasswordConfig) {
+          this.errorAlert("两次输入的密码不相同");
         }
       }
     },
     startVerificationTimer() {
+      this.hasNocode = false
       let iim = 100;
       this.verificationPercentage = 0;
       this.verificationProcessing = true;
@@ -566,6 +792,7 @@ export default {
       }, iim);
     },
     cancelVerificationTimer() {
+      this.hasNocode = true
       this.verificationProcessing = false;
       this.verificationPercentage = 0;
       clearInterval(this.verificationInterval);
@@ -576,7 +803,6 @@ export default {
       .getUser()
       .then(r => {
         if (r.data) {
-          console.log(r.data);
           this.userInfo.id = r.data.id;
           this.userInfo.authentication.name =
             r.data.authentication.name || null;

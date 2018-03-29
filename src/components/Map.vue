@@ -29,7 +29,7 @@
             <q-card color="green-6">
               <q-card-title>设备在线率</q-card-title>
               <q-card-main class="text-center">
-                <h5>{{online}} %</h5>
+                <h5>{{onlineRate}} %</h5>
               </q-card-main>
             </q-card>
           </div>
@@ -100,6 +100,7 @@
 </template>
 
 <script>
+import { LocalStorage } from "quasar";
 import { deviceService } from "api/index";
 import devicePanel from "./Device";
 export default {
@@ -108,9 +109,12 @@ export default {
   },
   data: () => ({
     status: 0,
-    total: 233,
-    online: 23,
+    total: 0,
+    online: 0,
     error: 13,
+    deviceIdList: [],
+    deviceTimeMap: new Map(),
+    deviceLocation: new Map(),
     clickDeviceId: null,
     mouseoverDeviceId: null,
     searchKey: null,
@@ -132,6 +136,11 @@ export default {
       } else {
         return this.mouseoverDeviceId;
       }
+    },
+    onlineRate: function() {
+      if (this.total > 0) {
+        return (this.online * 100 / this.total).toFixed(0);
+      }
     }
   },
   methods: {
@@ -145,6 +154,43 @@ export default {
         }
         this.markers = searchList;
         done([]);
+      }
+    },
+    getDeviceList() {
+      deviceService
+        .getAdapter()
+        .then(r => {
+          if (r.data) {
+            for (let i = 0; i < r.data.length; i++) {
+              if (
+                r.data[i].linked.id.includes("Y1") &&
+                (r.data[i].authorizations.indexOf("Operate") !== -1 ||
+                  r.data[i].authorizations.indexOf("operate") !== -1)
+              ) {
+                this.deviceIdList.push(r.data[i].linked.id);
+              }
+            }
+
+            this.total = this.deviceIdList.length;
+            this.getLastTime(this.deviceIdList);
+          }
+        })
+        .catch(e => {});
+    },
+    getLastTime(list) {
+      for (let i = 0; i < list.length; i++) {
+        deviceService
+          .getLastData(list[i])
+          .then(r => {
+            if (r.data && r.data.data && r.data.data[0]) {
+              let timestamp = r.data.data[0].timestamp;
+              let now = new Date().getTime();
+              if (now - timestamp < 60000) {
+                this.online++;
+              }
+            }
+          })
+          .catch(e => {});
       }
     },
     init() {
@@ -229,7 +275,8 @@ export default {
     }
   },
   created() {
-    this.init();
+    // this.init();
+    this.getDeviceList();
   }
 };
 </script>
