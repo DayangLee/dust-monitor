@@ -310,7 +310,8 @@ export default {
         label: "操作",
         field: "operateId",
         type: "string",
-        width: "120px"
+        width: "120px",
+        style: { paddingLeft:'-0px' }
       }
     ],
     pagination: true,

@@ -233,10 +233,10 @@
       <q-list>
         <div class="row justify-between" style="padding:0 20px;">
           <h5>历史记录</h5>
-          <q-btn color="positive">导出</q-btn>
+          <q-btn color="positive" @click="export2Excel">导出</q-btn>
         </div>
         <q-item-separator />
-        <div class="row justify-start items-center" style="margin:20px 0;">
+        <!-- <div class="row justify-start items-center" style="margin:20px 0;">
           <div class="left" style="width: 15%;">监测项目：</div>
           <div class="right">
             <q-checkbox v-model="checkArray" label="PM2.5" color="primary" val="pm2d5" />
@@ -245,8 +245,8 @@
             <q-checkbox v-model="checkArray" label="温度" val="temp" color="warning" style="margin-left: 10px" />
             <q-checkbox v-model="checkArray" label="湿度" val="hum" color="secondary" style="margin-left: 10px" />
           </div>
-        </div>
-        <div class="row justify-start items-center">
+        </div> -->
+        <div class="row justify-start items-center" style="margin:20px 0;">
           <div class="left" style="width: 15%;">时间范围：</div>
           <div class="right">
             <el-date-picker v-model="timeRange" type="datetimerange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
@@ -266,6 +266,8 @@
 import IEcharts from "vue-echarts-v3/src/lite.js";
 import "echarts/lib/chart/line";
 import "echarts/lib/component/grid";
+import "echarts/lib/component/dataZoom";
+import "echarts/lib/component/legend";
 import { deviceService } from "../api/index";
 import { timestampToTime } from "../lib/params";
 import { dataFormatService } from "../lib/dataFormat";
@@ -414,7 +416,7 @@ export default {
     tempSelect: null,
     humSelect: null,
     checkArray: ["pm2d5"],
-    timeRange: [new Date(2018, 2, 12, 10, 0), new Date()],
+    timeRange: [],
     historyData: []
   }),
   watch: {
@@ -455,15 +457,17 @@ export default {
     },
     option: function() {
       let xData = [];
+      let itemType = [];
       let seriesData = [];
       let pm2d5Data = [];
       let pm10Data = [];
       let dbData = [];
       let tempData = [];
       let humData = [];
+      let start = 0;
 
       for (let i = 0; i < this.historyData.length; i++) {
-        xData.push(timestampToTime(this.historyData[i].time));
+        xData.push(this.historyData[i].time);
         pm2d5Data.push(this.historyData[i].pm2d5);
         pm10Data.push(this.historyData[i].pm10);
         dbData.push(this.historyData[i].db);
@@ -471,69 +475,153 @@ export default {
         humData.push(this.historyData[i].hum);
       }
 
-      if (this.checkArray.indexOf("pm2d5") !== -1) {
-        seriesData.push({
-          name: "PM2.5",
-          type: "line",
-          data: pm2d5Data
-        });
+      // for (let i = 0; i < this.checkArray.length; i++) {
+      //   if (itemType.indexOf(this.checkArray[i]) === -1) {
+      //     itemType.push(this.checkArray[i]);
+      //     switch (this.checkArray[i]) {
+      //       case "pm2d5":
+      //         seriesData.push({
+      //           name: "PM2.5",
+      //           type: "line",
+      //           lineStyle: {
+      //             color: "#027be3"
+      //           },
+      //           data: pm2d5Data
+      //         });
+      //         break;
+      //       case "pm10":
+      //         seriesData.push({
+      //           name: "PM10",
+      //           type: "line",
+      //           lineStyle: {
+      //             color: "#21ba45"
+      //           },
+      //           data: pm10Data
+      //         });
+      //         break;
+      //       case "db":
+      //         seriesData.push({
+      //           name: "噪音",
+      //           type: "line",
+      //           lineStyle: {
+      //             color: "#db2828"
+      //           },
+      //           data: dbData
+      //         });
+      //         break;
+      //       case "temp":
+      //         seriesData.push({
+      //           name: "温度",
+      //           type: "line",
+      //           lineStyle: {
+      //             color: "#f2c037"
+      //           },
+      //           data: tempData
+      //         });
+      //         break;
+      //       case "hum":
+      //         seriesData.push({
+      //           name: "湿度",
+      //           type: "line",
+      //           lineStyle: {
+      //             color: "#26a69a"
+      //           },
+      //           data: humData
+      //         });
+      //         break;
+      //     }
+      //   }
+      //   ("  ");
+      // }
+
+      // for (let i = 0; i < itemType.length; i++) {
+      //   if (this.checkArray.indexOf(itemType[i]) === -1) {
+      //     itemType.splice(i, 1);
+      //     seriesData.splice(i, 1);
+      //   }
+      // }
+
+      if (this.historyData.length < 10) {
+        start = 0;
+      } else if (this.historyData.length < 50) {
+        start = 15;
+      } else if (this.historyData.length < 100) {
+        start = 30;
+      } else if (this.historyData.length < 150) {
+        start = 40;
+      } else if (this.historyData.length < 200) {
+        start = 60;
+      } else if (this.historyData.length < 300) {
+        start = 70;
+      } else if (this.historyData.length < 400) {
+        start = 80;
+      } else {
+        start = 90;
       }
-      if (this.checkArray.indexOf("pm10") !== -1) {
-        seriesData.push({
-          name: "PM10",
-          type: "line",
-          data: pm10Data
-        });
-      }
-      if (this.checkArray.indexOf("db") !== -1) {
-        seriesData.push({
-          name: "噪音",
-          type: "line",
-          data: dbData
-        });
-      }
-      if (this.checkArray.indexOf("temp") !== -1) {
-        seriesData.push({
-          name: "温度",
-          type: "line",
-          data: tempData
-        });
-      }
-      if (this.checkArray.indexOf("hum") !== -1) {
-        seriesData.push({
-          name: "湿度",
-          type: "line",
-          data: humData
-        });
-      }
+
+      // console.log(seriesData)
 
       let config = {
         grid: {
           left: "3%",
           right: "4%",
           bottom: "15%",
-          containLabel: true,
-          borderColor: "rgb(236,236,236)"
+          containLabel: true
+        },
+        legend: {
+          show: true,
+          data: [
+            {
+              name: "PM2.5",
+              icon: "bar",
+              textStyle: {
+                color: "#027be3"
+              }
+            },
+            {
+              name: "PM10",
+              icon: "bar",
+              textStyle: {
+                color: "#21ba45"
+              }
+            },
+            {
+              name: "噪音",
+              icon: "bar",
+              textStyle: {
+                color: "#db2828"
+              }
+            },
+            {
+              name: "温度",
+              icon: "bar",
+              textStyle: {
+                color: "#f2c037"
+              }
+            },
+            {
+              name: "湿度",
+              icon: "bar",
+              textStyle: {
+                color: "#26a69a"
+              }
+            }
+          ],
+          selected: {
+            "PM2.5": true,
+            PM10: true,
+            噪音: false,
+            温度: false,
+            湿度: false
+          }
         },
         dataZoom: [
           {
-            type: "inside",
-            start: 0,
-            end: 10
-          },
-          {
-            start: 0,
-            end: 10,
-            handleIcon:
-              "M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z",
-            handleSize: "80%",
-            handleStyle: {
-              color: "#fff",
-              shadowBlur: 3,
-              shadowColor: "rgba(0, 0, 0, 0.6)",
-              shadowOffsetX: 2,
-              shadowOffsetY: 2
-            }
+            type: "slider",
+            show: true,
+            start: start,
+            end: 100,
+            handleSize: "100%"
           }
         ],
         xAxis: [
@@ -547,7 +635,63 @@ export default {
             type: "value"
           }
         ],
-        series: seriesData
+        series: [
+          {
+            name: "PM2.5",
+            type: "line",
+            lineStyle: {
+              color: "#027be3"
+            },
+            itemStyle: {
+              normal: { color: "#027be3" }
+            },
+            data: pm2d5Data
+          },
+          {
+            name: "PM10",
+            type: "line",
+            lineStyle: {
+              color: "#21ba45"
+            },
+            itemStyle: {
+              normal: { color: "#21ba45" }
+            },
+            data: pm10Data
+          },
+          {
+            name: "噪音",
+            type: "line",
+            lineStyle: {
+              color: "#db2828"
+            },
+            itemStyle: {
+              normal: { color: "#db2828" }
+            },
+            data: dbData
+          },
+          {
+            name: "温度",
+            type: "line",
+            lineStyle: {
+              color: "#f2c037"
+            },
+            itemStyle: {
+              normal: { color: "#f2c037" }
+            },
+            data: tempData
+          },
+          {
+            name: "湿度",
+            type: "line",
+            lineStyle: {
+              color: "#26a69a"
+            },
+            itemStyle: {
+              normal: { color: "#26a69a" }
+            },
+            data: humData
+          }
+        ]
       };
       return config;
     }
@@ -659,7 +803,7 @@ export default {
           if (list && list.length !== 0) {
             for (let i = 0; i < list.length; i++) {
               let item = {};
-              item.time = list[i].timestamp;
+              item.time = timestampToTime(list[i].timestamp);
               item.pm2d5 = list[i].data.pm2d5;
               item.pm10 = list[i].data.pm10;
               item.db = list[i].data.db;
@@ -673,18 +817,18 @@ export default {
     export2Excel() {
       require.ensure([], () => {
         const { export_json_to_excel } = require("../lib/Export2Excel");
-        const tHeader = ["时间", "pm2d5"];
-        const filterVal = ["time", "pm2d5"];
+        const tHeader = ["时间", "pm2d5", "pm10", "db", "temp", "hum"];
+        const filterVal = ["time", "pm2d5", "pm10", "db", "temp", "hum"];
         const list = [];
-        for (let i = 0; i < this.xData.length; i++) {
-          list.push({
-            time: this.xData[i],
-            pm2d5: this.yData[i]
-          });
-        }
+        // for (let i = 0; i < this.xData.length; i++) {
+        //   list.push({
+        //     time: this.xData[i],
+        //     pm2d5: this.yData[i]
+        //   });
+        // }
 
-        const data = this.formatJson(filterVal, list);
-        export_json_to_excel(tHeader, data, this.device.name + "历史数据");
+        const data = this.formatJson(filterVal, this.historyData);
+        export_json_to_excel(tHeader, data, this.name + "历史数据");
       });
     },
     formatJson(filterVal, jsonData) {
@@ -697,6 +841,9 @@ export default {
     } else {
       this.edit = true;
     }
+    let now = new Date();
+    let preDate = new Date(now.getTime() - 24 * 3 * 60 * 60 * 1000);
+    this.timeRange = [preDate, now];
     this.getSimId();
     this.getRunTime();
     this.getStatus();
