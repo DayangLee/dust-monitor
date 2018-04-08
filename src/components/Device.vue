@@ -3,7 +3,7 @@
     <q-list>
       <div class="row justify-between" style="padding:0 20px;">
         <h5>设备信息</h5>
-        <q-btn color="positive" v-if="edit" @click="edit = false">完成</q-btn>
+        <q-btn color="positive" v-if="edit" @click="changeDeviceInfo">完成</q-btn>
         <q-btn color="primary" v-else-if="!edit" @click="edit = true">编辑</q-btn>
       </div>
       <q-item-separator />
@@ -13,7 +13,7 @@
               设备名称：
             </div>
             <div class="right">
-              <q-input class="input1" v-model="name" :disabled="!edit" color="white" inverted />
+              <q-input class="input1" v-model="deviceName" :disabled="!edit" color="white" inverted />
             </div>
           </div>
           <div class="item col-xs-12 col-sm-6 col-md-4 row justify-around items-center">
@@ -29,7 +29,7 @@
               设备ID：
             </div>
             <div class="right">
-              <div class="input1 row items-center">{{id}}</div>
+              <div class="input1 row items-center">{{deviceId}}</div>
             </div>
           </div>
         </div>
@@ -39,8 +39,8 @@
               设备状态：
             </div>
             <div class="right">
-              <q-radio v-model="deviceState" :disabled="!edit" val="0" color="red" label="关闭" />
-              <q-radio v-model="deviceState" :disabled="!edit" val="1" color="secondary" label="开启" style="margin-left: 10px" />
+              <q-radio v-model="newDeviceState" :disabled="!edit" val="0" color="red" label="关闭" />
+              <q-radio v-model="newDeviceState" :disabled="!edit" val="1" color="secondary" label="开启" style="margin-left: 10px" />
             </div>
           </div>
           <div class="item col-xs-12 col-sm-6 col-md-4 row justify-around items-center">
@@ -60,16 +60,6 @@
             </div>
           </div>
         </div>
-        <!-- <div class="row">
-          <div class="item col-xs-12 col-sm-6 col-md-4 row justify-around items-center">
-            <div class="left">
-              设备备注：
-            </div>
-            <div class="right">
-              <q-input class="input1" v-model="input" :disabled="!edit" color="white" inverted />
-            </div>
-          </div>
-        </div> -->
       </q-list>
 
       <q-list>
@@ -132,7 +122,7 @@
               <q-card-title>温度</q-card-title>
               <q-card-main class="text-center">
                 <div>
-                  <span class="num">{{lastData.temp}}</span>
+                  <span class="num">{{lastData.temperature}}</span>
                   <span class="unit">℃</span>
                 </div>
                 <div class="row justify-center items-center">
@@ -148,7 +138,7 @@
               <q-card-title>湿度</q-card-title>
               <q-card-main class="text-center">
                 <div>
-                  <span class="num">{{lastData.hum}}</span>
+                  <span class="num">{{lastData.humidity}}</span>
                   <span class="unit">%</span>
                 </div>
                 <div class="row justify-center items-center">
@@ -180,7 +170,7 @@
               <q-card-title>风向</q-card-title>
               <q-card-main class="text-center">
                 <div>
-                  <span class="num">{{lastData.windDir}}</span>
+                  <span class="num">{{lastData.windDirection}}</span>
                   <span class="unit"></span>
                 </div>
                 <div class="row justify-center items-center">
@@ -197,7 +187,7 @@
       <q-list>
         <div class="row justify-between" style="padding:0 20px;">
           <h5>设备常用设置</h5>
-          <q-btn color="positive">应用</q-btn>
+          <q-btn color="positive" @click="changeSettings">应用</q-btn>
         </div>
         <q-item-separator />
           <div class="row justify-around">
@@ -271,15 +261,75 @@ import "echarts/lib/component/legend";
 import { deviceService } from "../api/index";
 import { timestampToTime } from "../lib/params";
 import { dataFormatService } from "../lib/dataFormat";
+import { Alert } from "quasar";
+import "quasar-extras/animate/bounceInRight.css";
+import "quasar-extras/animate/bounceOutRight.css";
+const durTargetOptions = [
+  { value: 0, label: "5min" },
+  { value: 1, label: "15min" },
+  { value: 2, label: "30min" },
+  { value: 3, label: "60min" }
+];
+const particulatesOptions = [
+  { value: 0, label: "0.325" },
+  { value: 1, label: "0.330" },
+  { value: 2, label: "0.335" },
+  { value: 3, label: "0.340" },
+  { value: 4, label: "0.345" },
+  { value: 5, label: "0.350" },
+  { value: 6, label: "0.355" },
+  { value: 7, label: "0.360" },
+  { value: 8, label: "0.365" },
+  { value: 9, label: "0.370" },
+  { value: 10, label: "0.375" },
+  { value: 11, label: "0.380" },
+  { value: 12, label: "0.385" },
+  { value: 13, label: "0.390" },
+  { value: 14, label: "0.395" },
+  { value: 15, label: "0.400" },
+  { value: 16, label: "0.405" },
+  { value: 17, label: "0.410" },
+  { value: 18, label: "0.415" },
+  { value: 19, label: "0.420" },
+  { value: 20, label: "0.425" },
+  { value: 21, label: "0.430" },
+  { value: 22, label: "0.435" },
+  { value: 23, label: "0.440" }
+];
+const tempOptions = [
+  { value: 0, label: "-2.5%" },
+  { value: 1, label: "-2.0%" },
+  { value: 2, label: "-1.5%" },
+  { value: 3, label: "-1.0%" },
+  { value: 4, label: "-0.5%" },
+  { value: 5, label: "0" },
+  { value: 6, label: "+0.5%" },
+  { value: 7, label: "+1.0%" },
+  { value: 8, label: "+1.5%" },
+  { value: 9, label: "+2.0%" },
+  { value: 10, label: "+2.5%" }
+];
+const humOptions = [
+  { value: 0, label: "-25%" },
+  { value: 1, label: "-20%" },
+  { value: 2, label: "-15%" },
+  { value: 3, label: "-10%" },
+  { value: 4, label: "-5%" },
+  { value: 5, label: "0" },
+  { value: 6, label: "+05%" },
+  { value: 7, label: "+10%" },
+  { value: 8, label: "+15%" },
+  { value: 9, label: "+20%" },
+  { value: 10, label: "+25%" }
+];
 export default {
   name: "devicePanel",
   components: {
     IEcharts
   },
   props: {
-    id: {
-      required: true,
-      type: String
+    adapterId: {
+      required: true
     },
     name: {
       type: String
@@ -292,125 +342,28 @@ export default {
   },
   data: () => ({
     edit: false,
+    deviceName: null,
+    deviceId: null,
     simId: null,
     runTime: null,
-    deviceState: null,
+    deviceState: "0",
+    newDeviceState: "0",
     updateTime: "",
     lastData: {
-      pm2d5: null,
-      pm10: null,
-      db: null,
-      temp: null,
-      hum: null,
-      windSpeed: null,
-      windDir: null
+      pm2d5: "--",
+      pm10: "--",
+      db: "--",
+      temperature: "--",
+      humidity: "--",
+      windSpeed: "--",
+      windDirection: "--"
     },
     input: "",
     radio: 1,
-    durTargetOptions: [
-      {
-        label: "5min",
-        value: 300
-      },
-      {
-        label: "15min",
-        value: 900
-      },
-      {
-        label: "30min",
-        value: 1800
-      },
-      {
-        label: "60min",
-        value: 3600
-      }
-    ],
-    particulatesOptions: [
-      {
-        label: "0.30",
-        value: 0.3
-      },
-      {
-        label: "0.31",
-        value: 0.31
-      },
-      {
-        label: "0.32",
-        value: 0.32
-      },
-      {
-        label: "0.33",
-        value: 0.33
-      },
-      {
-        label: "0.34",
-        value: 0.34
-      },
-      {
-        label: "0.35",
-        value: 0.35
-      },
-      {
-        label: "0.36",
-        value: 0.36
-      },
-      {
-        label: "0.37",
-        value: 0.37
-      },
-      {
-        label: "0.38",
-        value: 0.38
-      },
-      {
-        label: "0.39",
-        value: 0.39
-      },
-      {
-        label: "0.40",
-        value: 0.4
-      },
-      {
-        label: "0.41",
-        value: 0.41
-      },
-      {
-        label: "0.42",
-        value: 0.42
-      },
-      {
-        label: "0.43",
-        value: 0.43
-      },
-      {
-        label: "0.44",
-        value: 0.44
-      },
-      {
-        label: "0.45",
-        value: 0.45
-      }
-    ],
-    tempOptions: [
-      {
-        label: "+0.5℃",
-        value: 1
-      },
-      {
-        label: "-0.5℃",
-        value: 2
-      }
-    ],
-    humOptions: [
-      {
-        label: "+0.5%",
-        value: 1
-      },
-      {
-        label: "-0.5%",
-        value: 2
-      }
-    ],
+    durTargetOptions: durTargetOptions,
+    particulatesOptions: particulatesOptions,
+    tempOptions: tempOptions,
+    humOptions: humOptions,
     durTargetSelect: null,
     particulatesSelect: null,
     tempSelect: null,
@@ -421,7 +374,9 @@ export default {
   }),
   watch: {
     timeRange(value) {
-      this.getHistoryData();
+      if(!value){
+        this.getHistoryData();
+      }
     }
   },
   computed: {
@@ -444,16 +399,16 @@ export default {
       return dataFormatService.DB.getLevelText(this.lastData.db);
     },
     tempColor: function() {
-      return dataFormatService.temp.getColor(this.lastData.temp);
+      return dataFormatService.temp.getColor(this.lastData.temperature);
     },
     tempLevelText: function() {
-      return dataFormatService.temp.getLevelText(this.lastData.temp);
+      return dataFormatService.temp.getLevelText(this.lastData.temperature);
     },
     humColor: function() {
-      return dataFormatService.hum.getColor(this.lastData.hum);
+      return dataFormatService.hum.getColor(this.lastData.humidity);
     },
     humLevelText: function() {
-      return dataFormatService.hum.getLevelText(this.lastData.hum);
+      return dataFormatService.hum.getLevelText(this.lastData.humidity);
     },
     option: function() {
       let xData = [];
@@ -474,72 +429,6 @@ export default {
         tempData.push(this.historyData[i].temp);
         humData.push(this.historyData[i].hum);
       }
-
-      // for (let i = 0; i < this.checkArray.length; i++) {
-      //   if (itemType.indexOf(this.checkArray[i]) === -1) {
-      //     itemType.push(this.checkArray[i]);
-      //     switch (this.checkArray[i]) {
-      //       case "pm2d5":
-      //         seriesData.push({
-      //           name: "PM2.5",
-      //           type: "line",
-      //           lineStyle: {
-      //             color: "#027be3"
-      //           },
-      //           data: pm2d5Data
-      //         });
-      //         break;
-      //       case "pm10":
-      //         seriesData.push({
-      //           name: "PM10",
-      //           type: "line",
-      //           lineStyle: {
-      //             color: "#21ba45"
-      //           },
-      //           data: pm10Data
-      //         });
-      //         break;
-      //       case "db":
-      //         seriesData.push({
-      //           name: "噪音",
-      //           type: "line",
-      //           lineStyle: {
-      //             color: "#db2828"
-      //           },
-      //           data: dbData
-      //         });
-      //         break;
-      //       case "temp":
-      //         seriesData.push({
-      //           name: "温度",
-      //           type: "line",
-      //           lineStyle: {
-      //             color: "#f2c037"
-      //           },
-      //           data: tempData
-      //         });
-      //         break;
-      //       case "hum":
-      //         seriesData.push({
-      //           name: "湿度",
-      //           type: "line",
-      //           lineStyle: {
-      //             color: "#26a69a"
-      //           },
-      //           data: humData
-      //         });
-      //         break;
-      //     }
-      //   }
-      //   ("  ");
-      // }
-
-      // for (let i = 0; i < itemType.length; i++) {
-      //   if (this.checkArray.indexOf(itemType[i]) === -1) {
-      //     itemType.splice(i, 1);
-      //     seriesData.splice(i, 1);
-      //   }
-      // }
 
       if (this.historyData.length < 10) {
         start = 0;
@@ -697,27 +586,8 @@ export default {
     }
   },
   methods: {
-    getSimId: function() {
-      deviceService.getDevice(this.id).then(r => {
-        if (
-          r.data &&
-          r.data.status &&
-          r.data.status.imsi &&
-          r.data.status.imsi.data
-        ) {
-          let imsi = r.data.status.imsi.data;
-          let simid = "";
-          for (let i = 0; i <= imsi.length - 1; i++) {
-            if (i % 2 !== 0) {
-              simid += imsi[i];
-            }
-          }
-          this.simId = simid;
-        }
-      });
-    },
-    getRunTime: function() {
-      deviceService.getDeviceOnlineTime(this.id).then(r => {
+    getRunTime: function(id) {
+      deviceService.getDeviceOnlineTime(id).then(r => {
         if (r.data.value) {
           let time = r.data.value;
           if (time < 60) {
@@ -735,17 +605,53 @@ export default {
         }
       });
     },
-    getStatus: function() {
-      deviceService.getDeviceStatus(this.id).then(r => {
-        if (r.data) {
-          // this.power = r.data.power.data;
-          // console.log(r.data);
+    getDeviceInfo: function(id) {
+      deviceService.getDevice(id).then(r => {
+        if (r.data && r.data.status) {
+          let status = r.data.status;
+          if (status.imsi && status.imsi.data) {
+            let imsi = r.data.status.imsi.data;
+            let simid = "";
+            for (let i = 0; i <= imsi.length - 1; i++) {
+              if (i % 2 !== 0) {
+                simid += imsi[i];
+              }
+            }
+            this.simId = simid;
+          }
+
+          if (status.settings_03) {
+            this.deviceState = status.settings_03.data + "";
+            this.newDeviceState = this.deviceState;
+          }
+
+          if (status.settings_00) {
+            this.particulatesSelect = status.settings_00.data;
+          }
+
+          if (status.settings_01) {
+            this.tempSelect = status.settings_01.data;
+          }
+
+          if (status.settings_02) {
+            this.humSelect = status.settings_02.data;
+          }
+
+          if (status.settings_05) {
+            this.durTargetSelect = status.settings_05.data;
+          }
+          // o   settings_00      颗粒数系数更改，0-23
+          // o   settings_01      温度校准（加减0.5°）
+          // o   settings_02      湿度校准（加减5%）
+          // o   settings_03     开关机
+          // o   settings_04     开关LED屏幕
+          // o   settings_05     更改数据上传间隔单位s
         }
       });
     },
-    getLastData: function() {
+    getLastData: function(id) {
       deviceService
-        .getLastData(this.id)
+        .getLastData(id)
         .then(r => {
           if (r.data && r.data.data && r.data.data[0]) {
             this.updateTime = timestampToTime(r.data.data[0].timestamp);
@@ -775,6 +681,8 @@ export default {
                     this.lastData.windDir = "西北风";
                   } else if (data.windDir <= 360) {
                     this.lastData.windDir = "北风";
+                  } else {
+                    this.lastData.windDir = "--";
                   }
                 }
               }
@@ -783,7 +691,7 @@ export default {
         })
         .catch(e => {});
     },
-    getHistoryData() {
+    getHistoryData(id) {
       this.historyData = [];
       const start = this.timeRange[0].getTime();
       const end = this.timeRange[1].getTime();
@@ -795,7 +703,7 @@ export default {
       params.duration = duration;
 
       this.$http
-        .get("/device/" + this.id + "/data/history", {
+        .get("/device/" + id + "/data/history", {
           params: params
         })
         .then(r => {
@@ -807,25 +715,145 @@ export default {
               item.pm2d5 = list[i].data.pm2d5;
               item.pm10 = list[i].data.pm10;
               item.db = list[i].data.db;
-              item.temp = list[i].data.temp;
-              item.hum = list[i].data.hum;
+              item.temp = list[i].data.temperature;
+              item.hum = list[i].data.humidity;
               this.historyData.push(item);
             }
           }
         });
     },
+    changeDeviceInfo() {
+      let change1 = false;
+      let change2 = false;
+      if (this.deviceName !== "" && this.deviceName !== this.name) {
+        let body = {
+          value: this.deviceName
+        };
+        deviceService
+          .changeCustomize(this.adapterId, "name", body)
+          .then(r => {
+            // this.edit = false;
+            change1 = true;
+          })
+          .catch(e => {
+            const alert = Alert.create({
+              enter: "bounceInRight",
+              leave: "bounceOutRight",
+              color: "error",
+              icon: "report_problem",
+              html: "操作失败",
+              position: "top-right"
+            });
+
+            setTimeout(function() {
+              if (alert) {
+                alert.dismiss();
+              }
+            }, 3000);
+          });
+      } else if (this.deviceName !== "" && this.deviceName === this.name) {
+        change1 = true;
+      } else if (this.deviceName === "") {
+        const alert = Alert.create({
+          enter: "bounceInRight",
+          leave: "bounceOutRight",
+          color: "warning",
+          icon: "warning",
+          html: "设备名称不能为空",
+          position: "top-right"
+        });
+
+        setTimeout(function() {
+          if (alert) {
+            alert.dismiss();
+          }
+        }, 3000);
+      }
+
+      if (this.newDeviceState !== this.deviceState) {
+        let body = {};
+        body.settings_03 = this.newDeviceState;
+
+        deviceService
+          .postDeviceCommands(this.deviceId, body)
+          .then(r => {
+            this.deviceState = this.newDeviceState;
+            change2 = true;
+          })
+          .catch(e => {
+            const alert = Alert.create({
+              enter: "bounceInRight",
+              leave: "bounceOutRight",
+              color: "error",
+              icon: "report_problem",
+              html: "操作失败",
+              position: "top-right"
+            });
+
+            setTimeout(function() {
+              if (alert) {
+                alert.dismiss();
+              }
+            }, 3000);
+          });
+      } else {
+        change2 = true;
+      }
+
+      const self = this;
+      setTimeout(function() {
+        if (change1 && change2) {
+          self.edit = false;
+        }
+      }, 1000);
+    },
+    changeSettings() {
+      let commit = {};
+      commit.settings_00 = this.particulatesSelect;
+      commit.settings_01 = this.tempSelect;
+      commit.settings_02 = this.humSelect;
+      commit.settings_05 = this.durTargetSelect;
+      deviceService
+        .postDeviceCommands(this.deviceId, commit)
+        .then(r => {
+          const alert = Alert.create({
+            enter: "bounceInRight",
+            leave: "bounceOutRight",
+            color: "positive",
+            icon: "check",
+            html: "常用设置更改成功",
+            position: "top-right"
+          });
+
+          setTimeout(function() {
+            if (alert) {
+              alert.dismiss();
+            }
+          }, 3000);
+        })
+        .catch(e => {
+          const alert = Alert.create({
+            enter: "bounceInRight",
+            leave: "bounceOutRight",
+            color: "error",
+            icon: "report_problem",
+            html: "操作失败",
+            position: "top-right"
+          });
+
+          setTimeout(function() {
+            if (alert) {
+              alert.dismiss();
+            }
+          }, 3000);
+        });
+    },
     export2Excel() {
       require.ensure([], () => {
         const { export_json_to_excel } = require("../lib/Export2Excel");
-        const tHeader = ["时间", "pm2d5", "pm10", "db", "temp", "hum"];
+        const tHeader = ["时间", "PM2.5", "PM19", "噪音", "温度", "湿度"];
         const filterVal = ["time", "pm2d5", "pm10", "db", "temp", "hum"];
         const list = [];
-        // for (let i = 0; i < this.xData.length; i++) {
-        //   list.push({
-        //     time: this.xData[i],
-        //     pm2d5: this.yData[i]
-        //   });
-        // }
 
         const data = this.formatJson(filterVal, this.historyData);
         export_json_to_excel(tHeader, data, this.name + "历史数据");
@@ -835,7 +863,17 @@ export default {
       return jsonData.map(v => filterVal.map(j => v[j]));
     }
   },
-  mounted() {
+  created() {
+    deviceService.getOneAdapter(this.adapterId).then(r => {
+      if (r.data) {
+        this.deviceId = r.data.linked.id;
+        this.getRunTime(this.deviceId);
+        this.getDeviceInfo(this.deviceId);
+        this.getLastData(this.deviceId);
+        this.getHistoryData(this.deviceId);
+      }
+    });
+
     if (this.state === 0) {
       this.edit = false;
     } else {
@@ -844,11 +882,7 @@ export default {
     let now = new Date();
     let preDate = new Date(now.getTime() - 24 * 3 * 60 * 60 * 1000);
     this.timeRange = [preDate, now];
-    this.getSimId();
-    this.getRunTime();
-    this.getStatus();
-    this.getLastData();
-    this.getHistoryData();
+    this.deviceName = this.name;
   }
 };
 </script>
@@ -866,6 +900,7 @@ export default {
   .right
     width 70%
     text-align left
+    font-size 1rem
     .input1
       width 87%
       height 40px

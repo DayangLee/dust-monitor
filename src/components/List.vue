@@ -24,13 +24,9 @@
       </div>
 
       <q-data-table id="deviceTable" :data="tableData" :config="config" :columns="columns">
-        <template slot="col-operateId" slot-scope="cell">
+        <template slot="col-adapterId" slot-scope="cell">
           <q-btn flat color="primary" @click="showDetail(cell.data,0)">详情</q-btn> |
           <q-btn flat color="primary" @click="showDetail(cell.data,1)">编辑</q-btn>
-          <!-- <div v-if="cell.data === 'Audit'" class="my-label">
-            <q-btn flat outline small @click="audit1(cell.data)">Audit</q-btn>
-          </div>
-          <div v-else class="my-label text-white bg-negative" @click="audit2(cell.data)">{{cell.data}}</div> -->
         </template>
       </q-data-table>
 
@@ -135,7 +131,7 @@
     </div>
 
     <div v-else-if="status === 1">
-      <device-panel :state="state" :id="currentId" :name="currentName"></device-panel>
+      <device-panel :state="state" :adapterId="currentId" :name="currentName"></device-panel>
     </div>
   </div>
 </template>
@@ -282,33 +278,36 @@ export default {
         label: "风向",
         field: "windDir",
         sort: true,
-        type: "string",
+        // type: "string",
         width: "100px",
         format(value, row) {
-          if (value < 20) {
+          value = row.winDir
+          if (value <= 20) {
             return "北风";
-          } else if (value < 70) {
+          } else if (value > 20 && value <= 70) {
             return "东北风";
-          } else if (value < 110) {
+          } else if (value > 70 && value <= 110) {
             return "东风";
-          } else if (value < 160) {
+          } else if (value > 110 && value <= 160) {
             return "东南风";
-          } else if (value < 200) {
+          } else if (value > 160 && value <= 200) {
             return "南风";
-          } else if (value < 250) {
+          } else if (value > 200 && value <= 250) {
             return "西南风";
-          } else if (value < 290) {
+          } else if (value > 250 && value <= 290) {
             return "西风";
-          } else if (value < 340) {
+          } else if (value > 290 && value <= 340) {
             return "西北风";
-          } else {
+          } else if(value > 340 && value <= 360){
             return "北风";
+          } else {
+            return ''
           }
         }
       },
       {
         label: "操作",
-        field: "operateId",
+        field: "adapterId",
         type: "string",
         width: "120px",
         style: { paddingLeft:'-0px' }
@@ -394,12 +393,14 @@ export default {
                 (r.data[i].authorizations.indexOf("Operate") !== -1 ||
                   r.data[i].authorizations.indexOf("operate") !== -1)
               ) {
-                let id = r.data[i].linked.id;
+                let adapterId = r.data[i].id;
+                let deviceId = r.data[i].linked.id;
                 let name =
                   r.data[i].customize.name ||
                   id.split("-")[0] + "-" + id.substr(-4);
                 this.deviceList.push({
-                  id: id,
+                  adapterId: adapterId,
+                  deviceId: deviceId,
                   name: name
                 });
               }
@@ -414,7 +415,7 @@ export default {
     getLastData(list) {
       for (let i = 0; i < list.length; i++) {
         deviceService
-          .getLastData(list[i].id)
+          .getLastData(list[i].deviceId)
           .then(r => {
             if (
               r.data &&
@@ -425,34 +426,29 @@ export default {
               const res = r.data.data[0].data;
               this.dataList.push({
                 index: this.dataList.length + 1,
-                id: list[i].id,
+                id: list[i].deviceId,
                 name: list[i].name,
-                operateId: list[i].id,
+                adapterId: list[i].adapterId,
                 pm2d5: res.pm2d5,
                 pm10: res.pm10,
                 db: res.db,
-                temp: res.temp,
-                hum: res.hum,
-                windSpeed: res.winSpeed,
-                winDir: res.winDir
+                temp: res.temperature,
+                hum: res.humidity,
+                windSpeed: res.windSpeed,
+                winDir: res.windDirection
               });
             }
+            console.log(this.dataList)
           })
           .catch(e => {});
       }
-    },
-    audit1(data) {
-      console.log(data);
-    },
-    audit2(data) {
-      console.log(data);
     },
     searchDevice(terms, done) {
       if (terms) {
         let list = [];
         for (let i = 0; i < this.dataList.length; i++) {
           if (
-            this.dataList[i].id.includes(terms) ||
+            this.dataList[i].deviceId.includes(terms) ||
             this.dataList[i].name.includes(terms)
           ) {
             list.push(this.dataList[i]);
@@ -623,15 +619,15 @@ export default {
       this.windSpeedSearch = null;
       this.windDirSearch = null;
     },
-    showDetail(id, state) {
-      this.status = 1;
+    showDetail(adapterId, state) {
       this.state = state;
-      this.currentId = id;
+      this.currentId = adapterId;
       for (let i = 0; i < this.tableData.length; i++) {
-        if (this.tableData[i].id === id) {
+        if (this.tableData[i].adapterId === adapterId) {
           this.currentName = this.tableData[i].name;
         }
       }
+      this.status = 1;
     }
   },
   created() {
