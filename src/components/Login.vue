@@ -1,10 +1,12 @@
 <template>
   <q-transition appear enter="fadeIn" leave="fadeOut" duration="250">
-    <div class="login-content">
-      <div class="text-center" style="margin:40px 0 50px;">
-        <h3 class="title y-center">
-          {{status === 'username' ? '登录 / 注册' : status.includes('login') ? '登录' : '注册'}}
-        </h3>
+    <div class="login-wrapper">
+      <div class="login-content bg-white">
+      <div class="text-center">
+        <div style="font-size:2rem;">
+          <!-- {{status === 'username' ? '登录 / 注册' : status.includes('login') ? '登录' : '注册'}} -->
+          汉王扬尘监测系统
+        </div>
       </div>
 
       <div class="fields" style="margin:30px;">
@@ -72,6 +74,7 @@
 
         <q-btn icon="undo" v-if="status !== 'username'" @click="popStatus" class="full-width btn">返回上一步</q-btn>
 
+      </div>
       </div>
     </div>
   </q-transition>
@@ -505,15 +508,26 @@ export default {
 </script>
 
 <style lang="stylus" scoped>
-.login-content
+.login-wrapper
+  background-image: url('../assets/login-bg.jpg');
+  background-size: 100vw 100vh;
+  background-repeat: no-repeat;
+  margin 0
   width 100vw
   min-width 300px
   height 100vh
-  .field, .buttons
-    width 80%
-    min-width 250px
-    margin-left 10%
-    margin-top 30px
-  .btn
-    margin-top 20px
+  .login-content
+    width 500px
+    position absolute
+    right 100px
+    top 20%
+    padding 50px 0 50px
+    border-radius 4px
+    .field, .buttons
+      width 80%
+      min-width 250px
+      margin-left 10%
+      margin-top 30px
+    .btn
+      margin-top 20px
 </style>

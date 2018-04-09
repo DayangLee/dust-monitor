@@ -851,7 +851,7 @@ export default {
     export2Excel() {
       require.ensure([], () => {
         const { export_json_to_excel } = require("../lib/Export2Excel");
-        const tHeader = ["时间", "PM2.5", "PM19", "噪音", "温度", "湿度"];
+        const tHeader = ["时间", "PM2.5", "PM10", "噪音", "温度", "湿度"];
         const filterVal = ["time", "pm2d5", "pm10", "db", "temp", "hum"];
         const list = [];
 

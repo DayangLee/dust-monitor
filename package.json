@@ -21,6 +21,7 @@
     "js-md5": "^0.7.3",
     "quasar-extras": "0.x",
     "quasar-framework": "0.14.9",
+    "uglifyjs-webpack-plugin": "^1.2.4",
     "vue": "^2.5.0",
     "vue-amap": "^0.5.4",
     "vue-echarts-v3": "^1.0.19",
