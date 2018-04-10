@@ -40,9 +40,6 @@ export default new VueRouter({
             }, {
                 path: 'user',
                 component: load('User')
-            }, {
-                path: 'hello',
-                component: load('Hello')
             }]
         },
         { path: '*', component: load('Error404') } // Not found

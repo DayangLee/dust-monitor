@@ -69,7 +69,7 @@
         </div>
         <q-item-separator />
         <div class="row dy-cols justify-between">
-          <div class="dy-col">
+          <div class="dy-col" v-show="hasPM25">
             <q-card>
               <q-card-title>PM2.5</q-card-title>
               <q-card-main class="text-center">
@@ -85,7 +85,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col">
+          <div class="dy-col" v-show="hasPM10">
             <q-card>
               <q-card-title>PM10</q-card-title>
               <q-card-main class="text-center">
@@ -101,7 +101,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col">
+          <div class="dy-col" v-show="hasDB">
             <q-card>
               <q-card-title>噪音</q-card-title>
               <q-card-main class="text-center">
@@ -117,7 +117,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col">    
+          <div class="dy-col" v-show="hasTemp">    
             <q-card>
               <q-card-title>温度</q-card-title>
               <q-card-main class="text-center">
@@ -133,7 +133,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col">    
+          <div class="dy-col" v-show="hasHum">    
             <q-card>
               <q-card-title>湿度</q-card-title>
               <q-card-main class="text-center">
@@ -149,7 +149,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col">    
+          <div class="dy-col" v-show="hasWindspeed">    
             <q-card>
               <q-card-title>风速</q-card-title>
               <q-card-main class="text-center">
@@ -165,7 +165,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col">    
+          <div class="dy-col" v-show="hasWinddir">    
             <q-card>
               <q-card-title>风向</q-card-title>
               <q-card-main class="text-center">
@@ -239,7 +239,7 @@
         <div class="row justify-start items-center" style="margin:20px 0;">
           <div class="left" style="width: 15%;">时间范围：</div>
           <div class="right">
-            <el-date-picker v-model="timeRange" type="datetimerange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
+            <el-date-picker v-model="timeRange" type="datetimerange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" @change="getHistoryData"></el-date-picker>
           </div>
         </div>
         <div class="echarts">
@@ -349,6 +349,13 @@ export default {
     deviceState: "0",
     newDeviceState: "0",
     updateTime: "",
+    hasPM25: false,
+    hasPM10: false,
+    hasDB: false,
+    hasTemp: false,
+    hasHum: false,
+    hasWindspeed: false,
+    hasWindDir: false,
     lastData: {
       pm2d5: "--",
       pm10: "--",
@@ -372,13 +379,6 @@ export default {
     timeRange: [],
     historyData: []
   }),
-  watch: {
-    timeRange(value) {
-      if(!value){
-        this.getHistoryData();
-      }
-    }
-  },
   computed: {
     pm2d5Color: function() {
       return dataFormatService.pm2d5.getColor(this.lastData.pm2d5);
@@ -393,22 +393,24 @@ export default {
       return dataFormatService.pm10.getLevelText(this.lastData.pm10);
     },
     dbColor: function() {
-      return dataFormatService.DB.getColor(this.lastData.db);
+      return dataFormatService.db.getColor(this.lastData.db);
     },
     dbLevelText: function() {
-      return dataFormatService.DB.getLevelText(this.lastData.db);
+      return dataFormatService.db.getLevelText(this.lastData.db);
     },
     tempColor: function() {
-      return dataFormatService.temp.getColor(this.lastData.temperature);
+      return dataFormatService.temperature.getColor(this.lastData.temperature);
     },
     tempLevelText: function() {
-      return dataFormatService.temp.getLevelText(this.lastData.temperature);
+      return dataFormatService.temperature.getLevelText(
+        this.lastData.temperature
+      );
     },
     humColor: function() {
-      return dataFormatService.hum.getColor(this.lastData.humidity);
+      return dataFormatService.humidity.getColor(this.lastData.humidity);
     },
     humLevelText: function() {
-      return dataFormatService.hum.getLevelText(this.lastData.humidity);
+      return dataFormatService.humidity.getLevelText(this.lastData.humidity);
     },
     option: function() {
       let xData = [];
@@ -657,33 +659,53 @@ export default {
             this.updateTime = timestampToTime(r.data.data[0].timestamp);
             const data = r.data.data[0].data;
             for (let item in this.lastData) {
-              if (item !== "windDir") {
+              if (item !== "windDirection") {
                 if (data[item] || data[item] === 0) {
-                  this.lastData[item] = data[item].toFixed(0);
+                  if (item === "temperature" || item === "humidity") {
+                    this.lastData[item] = (data[item] / 100).toFixed(0);
+                  } else {
+                    this.lastData[item] = data[item].toFixed(0);
+                  }
+                  if (item === "db") {
+                    this.hasDB = true;
+                  } else if (item === "pm2d5") {
+                    this.hasPM25 = true;
+                  } else if (item === "pm10") {
+                    this.hasPM10 = true;
+                  } else if (item === "temperature") {
+                    this.hasTemp = true;
+                  } else if (item === "humidity") {
+                    this.hasHum = true;
+                  } else if (item === "windSpeed") {
+                    this.hasWindspeed = true;
+                  } else if (item === "windDirection") {
+                    this.hasWindDir = true;
+                  }
                 }
               } else {
-                if (data.windDir || data.windDir === 0) {
-                  if (data.windDir < 20) {
-                    this.lastData.windDir = "北风";
-                  } else if (data.windDir < 70) {
-                    this.lastData.windDir = "东北风";
-                  } else if (data.windDir < 110) {
-                    this.lastData.windDir = "东风";
-                  } else if (data.windDir < 160) {
-                    this.lastData.windDir = "东南风";
-                  } else if (data.windDir < 200) {
-                    this.lastData.windDir = "南风";
-                  } else if (data.windDir < 250) {
-                    this.lastData.windDir = "西南风";
-                  } else if (data.windDir < 290) {
-                    this.lastData.windDir = "西风";
-                  } else if (data.windDir < 340) {
-                    this.lastData.windDir = "西北风";
-                  } else if (data.windDir <= 360) {
-                    this.lastData.windDir = "北风";
+                if (data.windDirection || data.windDirection === 0) {
+                  if (data.windDirection < 20) {
+                    this.lastData.windDirection = "北风";
+                  } else if (data.windDirection < 70) {
+                    this.lastData.windDirection = "东北风";
+                  } else if (data.windDirection < 110) {
+                    this.lastData.windDirection = "东风";
+                  } else if (data.windDirection < 160) {
+                    this.lastData.windDirection = "东南风";
+                  } else if (data.windDirection < 200) {
+                    this.lastData.windDirection = "南风";
+                  } else if (data.windDirection < 250) {
+                    this.lastData.windDirection = "西南风";
+                  } else if (data.windDirection < 290) {
+                    this.lastData.windDirection = "西风";
+                  } else if (data.windDirection < 340) {
+                    this.lastData.windDirection = "西北风";
+                  } else if (data.windDirection <= 360) {
+                    this.lastData.windDirection = "北风";
                   } else {
-                    this.lastData.windDir = "--";
+                    this.lastData.windDirection = "--";
                   }
+                  console.log(this.lastData.windDirection);
                 }
               }
             }
@@ -691,36 +713,39 @@ export default {
         })
         .catch(e => {});
     },
-    getHistoryData(id) {
+    getHistoryData() {
       this.historyData = [];
-      const start = this.timeRange[0].getTime();
-      const end = this.timeRange[1].getTime();
-      const duration = end - start;
+      if (this.timeRange !== []) {
+        console.log(this.timeRange);
+        const start = this.timeRange[0].getTime();
+        const end = this.timeRange[1].getTime();
+        const duration = end - start;
 
-      let params = {};
-      params.scale = 1;
-      params.start = start;
-      params.duration = duration;
+        let params = {};
+        params.scale = 1;
+        params.start = start;
+        params.duration = duration;
 
-      this.$http
-        .get("/device/" + id + "/data/history", {
-          params: params
-        })
-        .then(r => {
-          const list = r.data.data;
-          if (list && list.length !== 0) {
-            for (let i = 0; i < list.length; i++) {
-              let item = {};
-              item.time = timestampToTime(list[i].timestamp);
-              item.pm2d5 = list[i].data.pm2d5;
-              item.pm10 = list[i].data.pm10;
-              item.db = list[i].data.db;
-              item.temp = list[i].data.temperature;
-              item.hum = list[i].data.humidity;
-              this.historyData.push(item);
+        this.$http
+          .get("/device/" + this.deviceId + "/data/history", {
+            params: params
+          })
+          .then(r => {
+            const list = r.data.data;
+            if (list && list.length !== 0) {
+              for (let i = 0; i < list.length; i++) {
+                let item = {};
+                item.time = timestampToTime(list[i].timestamp);
+                item.pm2d5 = list[i].data.pm2d5;
+                item.pm10 = list[i].data.pm10;
+                item.db = list[i].data.db;
+                item.temp = list[i].data.temperature;
+                item.hum = list[i].data.humidity;
+                this.historyData.push(item);
+              }
             }
-          }
-        });
+          });
+      }
     },
     changeDeviceInfo() {
       let change1 = false;

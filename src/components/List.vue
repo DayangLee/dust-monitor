@@ -140,6 +140,7 @@
 import VDistpicker from "./Distpicker";
 import { deviceService } from "api/index";
 import devicePanel from "./Device";
+import { LocalStorage } from "quasar";
 export default {
   components: {
     VDistpicker,
@@ -237,42 +238,70 @@ export default {
         field: "pm2d5",
         type: "number",
         sort: true,
-        width: "80px"
+        width: "80px",
+        format(value, row) {
+          if (value || value === 0) {
+            return value + "ug/m³";
+          } else {
+            return value;
+          }
+        }
       },
       {
         label: "PM10",
         field: "pm10",
         sort: true,
         type: "number",
-        width: "80px"
-      },
-      {
-        label: "噪音",
-        field: "db",
-        sort: true,
-        type: "number",
-        width: "80px"
+        width: "80px",
+        format(value, row) {
+          if (value || value === 0) {
+            return value + "ug/m³";
+          } else {
+            return value;
+          }
+        }
       },
       {
         label: "温度",
         field: "temp",
         sort: true,
         type: "number",
-        width: "80px"
+        width: "80px",
+        format(value, row) {
+          if (value || value === 0) {
+            return value + "℃";
+          } else {
+            return value;
+          }
+        }
       },
       {
         label: "湿度",
         field: "hum",
         sort: true,
         type: "number",
-        width: "80px"
+        width: "80px",
+        format(value, row) {
+          if (value || value === 0) {
+            return value + "%";
+          } else {
+            return value;
+          }
+        }
       },
       {
         label: "风速",
         field: "windSpeed",
         sort: true,
         type: "number",
-        width: "80px"
+        width: "80px",
+        format(value, row) {
+          if (value || value === 0) {
+            return value + "m/s";
+          } else {
+            return value;
+          }
+        }
       },
       {
         label: "风向",
@@ -281,7 +310,7 @@ export default {
         // type: "string",
         width: "100px",
         format(value, row) {
-          value = row.winDir
+          value = row.winDir;
           if (value <= 20) {
             return "北风";
           } else if (value > 20 && value <= 70) {
@@ -298,10 +327,24 @@ export default {
             return "西风";
           } else if (value > 290 && value <= 340) {
             return "西北风";
-          } else if(value > 340 && value <= 360){
+          } else if (value > 340 && value <= 360) {
             return "北风";
           } else {
-            return ''
+            return "";
+          }
+        }
+      },
+      {
+        label: "噪音",
+        field: "db",
+        sort: true,
+        type: "number",
+        width: "80px",
+        format(value, row) {
+          if (value || value === 0) {
+            return value + "db";
+          } else {
+            return value;
           }
         }
       },
@@ -310,7 +353,7 @@ export default {
         field: "adapterId",
         type: "string",
         width: "120px",
-        style: { paddingLeft:'-0px' }
+        style: { paddingLeft: "-0px" }
       }
     ],
     pagination: true,
@@ -424,11 +467,14 @@ export default {
               r.data.data[0].data
             ) {
               const res = r.data.data[0].data;
+              const addressText = LocalStorage.get.item(list[i].deviceId);
+              console.log(addressText);
               this.dataList.push({
                 index: this.dataList.length + 1,
                 id: list[i].deviceId,
                 name: list[i].name,
                 adapterId: list[i].adapterId,
+                address: addressText,
                 pm2d5: res.pm2d5,
                 pm10: res.pm10,
                 db: res.db,
@@ -438,7 +484,7 @@ export default {
                 winDir: res.windDirection
               });
             }
-            console.log(this.dataList)
+            console.log(this.dataList);
           })
           .catch(e => {});
       }

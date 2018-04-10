@@ -995,7 +995,7 @@ export const dataFormatService = {
         }
     },
 
-    DB: {
+    db: {
         name: '噪声',
         unit: 'db',
         level: [{
@@ -1052,21 +1052,21 @@ export const dataFormatService = {
             } else if (num >= 200) {
                 return 'veryBad'
             } else {
-                for (let i = 0; i < dataFormatService.DB.level.length; i++) {
-                    if (num <= dataFormatService.DB.level[i].num) {
-                        return dataFormatService.DB.level[i].levelName
+                for (let i = 0; i < dataFormatService.db.level.length; i++) {
+                    if (num <= dataFormatService.db.level[i].num) {
+                        return dataFormatService.db.level[i].levelName
                     }
                 }
             }
         },
         getColor: function(num) {
-            return dataFormatService.DB.barColor[this.getLevel(num)]
+            return dataFormatService.db.barColor[this.getLevel(num)]
         },
         getLevelText: function(num) {
-            return dataFormatService.DB.levelText[this.getLevel(num)]
+            return dataFormatService.db.levelText[this.getLevel(num)]
         },
         getSuggestText: function(num) {
-            return dataFormatService.DB.suggestsText[this.getLevel(num)]
+            return dataFormatService.db.suggestsText[this.getLevel(num)]
         },
         getPercentage: function(num) {
             if (num < 0 || num === '--') {
@@ -1076,16 +1076,16 @@ export const dataFormatService = {
             } else if (num >= 200) {
                 return 100
             } else {
-                for (let i = 0; i < dataFormatService.DB.level.length; i++) {
-                    if (num <= dataFormatService.DB.level[i].num) {
-                        return (16.6 * i) + (((num - dataFormatService.DB.level[i - 1].num) / (dataFormatService.DB.level[i].num - dataFormatService.DB.level[i - 1].num)) * 16.6)
+                for (let i = 0; i < dataFormatService.db.level.length; i++) {
+                    if (num <= dataFormatService.db.level[i].num) {
+                        return (16.6 * i) + (((num - dataFormatService.db.level[i - 1].num) / (dataFormatService.db.level[i].num - dataFormatService.db.level[i - 1].num)) * 16.6)
                     }
                 }
             }
         }
     },
 
-    hum: {
+    humidity: {
         name: '湿度',
         unit: '%',
         level: [{
@@ -1130,21 +1130,21 @@ export const dataFormatService = {
             } else if (num >= 100) {
                 return 'rank4'
             } else {
-                for (let i = 0; i < dataFormatService.hum.level.length; i++) {
-                    if (num <= dataFormatService.hum.level[i].num) {
-                        return dataFormatService.hum.level[i].levelName
+                for (let i = 0; i < dataFormatService.humidity.level.length; i++) {
+                    if (num <= dataFormatService.humidity.level[i].num) {
+                        return dataFormatService.humidity.level[i].levelName
                     }
                 }
             }
         },
         getColor: function(num) {
-            return dataFormatService.hum.barColor[this.getLevel(num)]
+            return dataFormatService.humidity.barColor[this.getLevel(num)]
         },
         getLevelText: function(num) {
-            return dataFormatService.hum.levelText[this.getLevel(num)]
+            return dataFormatService.humidity.levelText[this.getLevel(num)]
         },
         getSuggestText: function(num) {
-            return dataFormatService.hum.suggestsText[this.getLevel(num)]
+            return dataFormatService.humidity.suggestsText[this.getLevel(num)]
         },
         getPercentage: function(num) {
             if (num < 0 || num === '--') {
@@ -1154,16 +1154,16 @@ export const dataFormatService = {
             } else if (num >= 100) {
                 return 100
             } else {
-                for (let i = 0; i < dataFormatService.hum.level.length; i++) {
-                    if (num <= dataFormatService.hum.level[i].num) {
-                        return (25 * i) + (((num - dataFormatService.hum.level[i - 1].num) / (dataFormatService.hum.level[i].num - dataFormatService.hum.level[i - 1].num)) * 25)
+                for (let i = 0; i < dataFormatService.humidity.level.length; i++) {
+                    if (num <= dataFormatService.humidity.level[i].num) {
+                        return (25 * i) + (((num - dataFormatService.humidity.level[i - 1].num) / (dataFormatService.humidity.level[i].num - dataFormatService.humidity.level[i - 1].num)) * 25)
                     }
                 }
             }
         }
     },
 
-    temp: {
+    temperature: {
         name: '温度',
         unit: '°C',
         level: [{
@@ -1215,21 +1215,21 @@ export const dataFormatService = {
             } else if (num > 37) {
                 return 'bad'
             } else {
-                for (let i = 0; i < dataFormatService.temp.level.length; i++) {
-                    if (num <= dataFormatService.temp.level[i].num) {
-                        return dataFormatService.temp.level[i].levelName
+                for (let i = 0; i < dataFormatService.temperature.level.length; i++) {
+                    if (num <= dataFormatService.temperature.level[i].num) {
+                        return dataFormatService.temperature.level[i].levelName
                     }
                 }
             }
         },
         getColor: function(num) {
-            return dataFormatService.temp.barColor[this.getLevel(num)]
+            return dataFormatService.temperature.barColor[this.getLevel(num)]
         },
         getLevelText: function(num) {
-            return dataFormatService.temp.levelText[this.getLevel(num)]
+            return dataFormatService.temperature.levelText[this.getLevel(num)]
         },
         getSuggestText: function(num) {
-            return dataFormatService.temp.suggestsText[this.getLevel(num)]
+            return dataFormatService.temperature.suggestsText[this.getLevel(num)]
         },
         getPercentage: function(num) {
             if (num < 0 || num === '--') {
@@ -1239,9 +1239,9 @@ export const dataFormatService = {
             } else if (num > 37) {
                 return 100
             } else {
-                for (let i = 0; i < dataFormatService.temp.level.length; i++) {
-                    if (num <= dataFormatService.temp.level[i].num) {
-                        return (25 * i) + (((num - dataFormatService.temp.level[i - 1].num) / (dataFormatService.temp.level[i].num - dataFormatService.temp.level[i - 1].num)) * 25)
+                for (let i = 0; i < dataFormatService.temperature.level.length; i++) {
+                    if (num <= dataFormatService.temperature.level[i].num) {
+                        return (25 * i) + (((num - dataFormatService.temperature.level[i - 1].num) / (dataFormatService.temperature.level[i].num - dataFormatService.temperature.level[i - 1].num)) * 25)
                     }
                 }
             }

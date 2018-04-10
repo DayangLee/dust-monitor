@@ -27,9 +27,9 @@
           </div>
           <div class="col-xs-12 col-sm-4 col-md-4">
             <q-card color="green-6">
-              <q-card-title>设备在线率</q-card-title>
+              <q-card-title>当前在线设备数</q-card-title>
               <q-card-main class="text-center">
-                <h5>{{onlineRate}} %</h5>
+                <h5>{{online}} 台</h5>
               </q-card-main>
             </q-card>
           </div>
@@ -63,7 +63,7 @@
             <div class="panel absolute-top-right bg-white" v-show="panelVisible"> 
               <q-list>
                 <q-list-header class="row justify-between">
-                  <h6>设备{{deviceId}}</h6>
+                  <h6>设备{{currentName}}</h6>
                   <q-icon name="close" @click="panelVisible = false" />
                   </q-list-header>
                   <q-item-separator />
@@ -74,15 +74,15 @@
                 <q-item-separator />
                 <q-item>
                   <q-item-side class="text-bold text-red">AQI</q-item-side>
-                  <q-item-main class="text-bold text-red">233</q-item-main>
-                  <q-item-side right><div class="rank text-white bg-red">严重污染</div></q-item-side>
+                  <q-item-main class="text-bold text-red">{{aqi}}</q-item-main>
+                  <q-item-side right><div class="rank text-white" :style="{backgroundColor: aqiColor}">{{aqiLevel}}</div></q-item-side>
                 </q-item>
                 <q-item-separator />
                 <q-list-header>设备数据</q-list-header>
                 <q-item v-for="(item,index) in dataList" :key="index">
-                  <q-item-side>{{item.type}}</q-item-side>
-                  <q-item-main>{{item.data}}</q-item-main>
-                  <q-item-side>重度污染</q-item-side>
+                  <q-item-side style="width: 20%;">{{item.name}}</q-item-side>
+                  <q-item-main>{{item.data.toFixed(0)}}</q-item-main>
+                  <q-item-side>{{item.level}}</q-item-side>
                 </q-item>
                 <q-item><q-item-main class="text-center"><q-btn color="primary" @click="status = 1">查看详情</q-btn></q-item-main></q-item>
               </q-list>
@@ -93,7 +93,7 @@
     </div>
 
     <div v-else-if="status === 1">
-      <device-panel></device-panel>
+      <device-panel :adapterId="currentId" :name="currentName" :state="state"></device-panel>
     </div>
 
   </div>
@@ -102,6 +102,7 @@
 <script>
 import { LocalStorage } from "quasar";
 import { deviceService } from "api/index";
+import { dataFormatService } from "../lib/dataFormat";
 import devicePanel from "./Device";
 export default {
   components: {
@@ -111,23 +112,31 @@ export default {
     status: 0,
     total: 0,
     online: 0,
-    error: 13,
+    error: 0,
+    state: 0,
     deviceIdList: [],
     deviceTimeMap: new Map(),
-    deviceLocation: new Map(),
+    deviceLocation: [],
+    deviceNameMap: new Map(),
+    deviceAdapterIdMap: new Map(),
     clickDeviceId: null,
     mouseoverDeviceId: null,
     searchKey: null,
     deviceList: [],
     map: {
-      zoom: 12,
+      zoom: 8,
       center: [116.397045, 39.907623]
     },
     markers: [],
+    currentName: null,
+    currentId: null,
     addressText: null,
     addressInfo: null,
     panelVisible: false,
-    dataList: []
+    dataList: [],
+    aqi: null,
+    aqiLevel: "--",
+    aqiColor: "rgba(136,136,136,.6)"
   }),
   computed: {
     deviceId: function() {
@@ -136,19 +145,22 @@ export default {
       } else {
         return this.mouseoverDeviceId;
       }
-    },
-    onlineRate: function() {
-      if (this.total > 0) {
-        return (this.online * 100 / this.total).toFixed(0);
+    }
+  },
+  watch: {
+    searchKey(value) {
+      if (!value) {
+        this.markers = this.deviceList;
       }
     }
   },
   methods: {
     searchDevice(terms, done) {
-      if (this.searchKey !== "") {
+      console.log(this.searchKey);
+      if (terms !== "") {
         let searchList = [];
         for (let i = 0; i < this.deviceList.length; i++) {
-          if (this.deviceList[i].name.includes(this.searchKey)) {
+          if (this.deviceList[i].name.includes(terms)) {
             searchList.push(this.deviceList[i]);
           }
         }
@@ -168,11 +180,19 @@ export default {
                   r.data[i].authorizations.indexOf("operate") !== -1)
               ) {
                 this.deviceIdList.push(r.data[i].linked.id);
+                let name =
+                  r.data[i].customize.name ||
+                  "Y1-" + r.data[i].linked.id.substr(-4);
+                let adapterId = r.data[i].id;
+                this.deviceNameMap.set(r.data[i].linked.id, name);
+                this.deviceAdapterIdMap.set(r.data[i].linked.id, adapterId);
+                // console.log(this.deviceAdapterIdMap)
               }
             }
 
             this.total = this.deviceIdList.length;
             this.getLastTime(this.deviceIdList);
+            this.getStatus(this.deviceIdList);
           }
         })
         .catch(e => {});
@@ -193,16 +213,41 @@ export default {
           .catch(e => {});
       }
     },
-    init() {
+    getStatus(list) {
+      for (let i = 0; i < list.length; i++) {
+        deviceService
+          .getDeviceStatus(list[i])
+          .then(r => {
+            if (r.data && r.data.latitude && r.data.longitude) {
+              let latitude = r.data.latitude.data;
+              let longitude = r.data.longitude.data;
+              this.deviceLocation.push({
+                id: list[i],
+                lat: latitude,
+                long: longitude
+              });
+            }
+            if (i === list.length - 1) {
+              this.initMap();
+            }
+          })
+          .catch(e => {});
+      }
+    },
+    initMap() {
       let markers = [];
       let num = 20;
       let self = this;
-
-      for (let i = 0; i < num; i++) {
+      let idx = 0;
+      for (let i = 0; i < this.deviceLocation.length; i++) {
+        if(!LocalStorage.has(this.deviceLocation[i].id)){
+          this.setAddressText(this.deviceLocation[i].id,[this.deviceLocation[i].long, this.deviceLocation[i].lat])
+        }
+        
         markers.push({
-          id: i,
-          position: [116.242045 + i * 0.02, 39.907623 + i * 0.002],
-          name: i + "",
+          id: this.deviceLocation[i].id,
+          position: [this.deviceLocation[i].long, this.deviceLocation[i].lat],
+          name: this.deviceNameMap.get(this.deviceLocation[i].id),
           showText: false,
           showInfo: false,
           events: {
@@ -217,6 +262,8 @@ export default {
                 }
               }
               self.panelVisible = true;
+              self.currentName = markers[i].name;
+              self.currentId = self.deviceAdapterIdMap.get(markers[i].id);
               self.getDataList();
             },
             mouseover() {
@@ -250,25 +297,45 @@ export default {
         }
       });
     },
+    setAddressText(id, position) {
+      const self = this;
+      position = position || [116.397045, 39.907623];
+      let geocoder = new AMap.Geocoder({
+        radius: 1000,
+        extensions: "all"
+      });
+      geocoder.getAddress(position, function(status, result) {
+        if (status === "complete" && result.info === "OK") {
+          LocalStorage.set(id, result.regeocode.formattedAddress);
+        }
+      });
+      
+    },
     getDataList: function() {
       if (this.panelVisible && this.deviceId) {
-        console.log(this.deviceId);
-        let deviceId = "Y1-41013edd16b365040005";
-        let dataListType = ["pm2d5", "pm10", "pmSensorFails", "hum", "temp"];
+        let dataListType = ["pm2d5", "pm10", "db", "humidity", "temperature"];
         let list = [];
-        deviceService.getLastData(deviceId).then(r => {
+        deviceService.getLastData(this.deviceId).then(r => {
           if (r.data && r.data.data && r.data.data[0] && r.data.data[0].data) {
             let lastData = r.data.data[0].data;
             for (let i = 0; i < dataListType.length; i++) {
               let type = dataListType[i];
-              if (lastData[type] >= 0) {
+              if (lastData[type] >= 0 && dataFormatService[type]) {
                 list.push({
                   type: type,
-                  data: lastData[type]
+                  data: lastData[type],
+                  name: dataFormatService[type].name,
+                  level: dataFormatService[type].getLevelText(lastData[type])
                 });
               }
             }
             this.dataList = list;
+
+            if (lastData.aqi >= 0) {
+              this.aqi = lastData.aqi.toFixed(0);
+              this.aqiLevel = dataFormatService.aqi.getLevelText(lastData.aqi);
+              this.aqiColor = dataFormatService.aqi.getColor(lastData.aqi);
+            }
           }
         });
       }

@@ -29,10 +29,6 @@
           <q-item-side icon="mood" />
           <q-item-main label="个人中心"/>
         </q-side-link>
-        <q-side-link replace item to="/main/hello">
-          <q-item-side icon="mood" />
-          <q-item-main label="测试"/>
-        </q-side-link>
       </div>
 
       <router-view/>
@@ -42,6 +38,7 @@
 
 <script type="text/ecmascript-6">
 import { userService } from "api/index";
+import { LocalStorage } from "quasar";
 export default {
   data() {
     return {
@@ -53,13 +50,7 @@ export default {
       const self = this;
       userService.logout().then(r => {
         this.$router.replace("/login");
-      });
-    },
-    qrcodescan() {
-      Dialog.create({
-        title: "scan",
-        messge: "pretend scan",
-        buttons: ["Back"]
+        LocalStorage.clear()
       });
     }
   },
