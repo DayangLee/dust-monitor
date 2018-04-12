@@ -165,7 +165,7 @@
               </q-card-main>
             </q-card>
           </div>
-          <div class="dy-col" v-show="hasWinddir">    
+          <div class="dy-col" v-show="hasWindDirection">    
             <q-card>
               <q-card-title>风向</q-card-title>
               <q-card-main class="text-center">
@@ -271,30 +271,30 @@ const durTargetOptions = [
   { value: 3, label: "60min" }
 ];
 const particulatesOptions = [
-  { value: 0, label: "0.325" },
-  { value: 1, label: "0.330" },
-  { value: 2, label: "0.335" },
-  { value: 3, label: "0.340" },
-  { value: 4, label: "0.345" },
-  { value: 5, label: "0.350" },
-  { value: 6, label: "0.355" },
-  { value: 7, label: "0.360" },
-  { value: 8, label: "0.365" },
-  { value: 9, label: "0.370" },
-  { value: 10, label: "0.375" },
-  { value: 11, label: "0.380" },
-  { value: 12, label: "0.385" },
-  { value: 13, label: "0.390" },
-  { value: 14, label: "0.395" },
-  { value: 15, label: "0.400" },
-  { value: 16, label: "0.405" },
-  { value: 17, label: "0.410" },
-  { value: 18, label: "0.415" },
-  { value: 19, label: "0.420" },
-  { value: 20, label: "0.425" },
-  { value: 21, label: "0.430" },
-  { value: 22, label: "0.435" },
-  { value: 23, label: "0.440" }
+  { value: 0, label: "0.40" },
+  { value: 1, label: "0.45" },
+  { value: 2, label: "0.50" },
+  { value: 3, label: "0.55" },
+  { value: 4, label: "0.60" },
+  { value: 5, label: "0.65" },
+  { value: 6, label: "0.70" },
+  { value: 7, label: "0.75" },
+  { value: 8, label: "0.80" },
+  { value: 9, label: "0.85" },
+  { value: 10, label: "0.90" },
+  { value: 11, label: "0.95" },
+  { value: 12, label: "1.00" },
+  { value: 13, label: "1.05" },
+  { value: 14, label: "1.10" },
+  { value: 15, label: "1.15" },
+  { value: 16, label: "1.20" },
+  { value: 17, label: "1.25" },
+  { value: 18, label: "1.30" },
+  { value: 19, label: "1.35" },
+  { value: 20, label: "1.40" },
+  { value: 21, label: "1.45" },
+  { value: 22, label: "1.50" },
+  { value: 23, label: "1.55" }
 ];
 const tempOptions = [
   { value: 0, label: "-2.5%" },
@@ -355,7 +355,7 @@ export default {
     hasTemp: false,
     hasHum: false,
     hasWindspeed: false,
-    hasWindDir: false,
+    hasWindDirection: false,
     lastData: {
       pm2d5: "--",
       pm10: "--",
@@ -684,21 +684,22 @@ export default {
                 }
               } else {
                 if (data.windDirection || data.windDirection === 0) {
-                  if (data.windDirection < 20) {
+                  this.hasWindDirection = true
+                  if (data.windDirection <= 22) {
                     this.lastData.windDirection = "北风";
-                  } else if (data.windDirection < 70) {
+                  } else if (data.windDirection <= 67) {
                     this.lastData.windDirection = "东北风";
-                  } else if (data.windDirection < 110) {
+                  } else if (data.windDirection <= 112) {
                     this.lastData.windDirection = "东风";
-                  } else if (data.windDirection < 160) {
+                  } else if (data.windDirection <= 157) {
                     this.lastData.windDirection = "东南风";
-                  } else if (data.windDirection < 200) {
+                  } else if (data.windDirection <= 202) {
                     this.lastData.windDirection = "南风";
-                  } else if (data.windDirection < 250) {
+                  } else if (data.windDirection <= 247) {
                     this.lastData.windDirection = "西南风";
-                  } else if (data.windDirection < 290) {
+                  } else if (data.windDirection <= 292) {
                     this.lastData.windDirection = "西风";
-                  } else if (data.windDirection < 340) {
+                  } else if (data.windDirection <= 337) {
                     this.lastData.windDirection = "西北风";
                   } else if (data.windDirection <= 360) {
                     this.lastData.windDirection = "北风";
@@ -722,7 +723,7 @@ export default {
         const duration = end - start;
 
         let params = {};
-        params.scale = 1;
+        params.scale = 2;
         params.start = start;
         params.duration = duration;
 

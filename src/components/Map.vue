@@ -63,7 +63,7 @@
             <div class="panel absolute-top-right bg-white" v-show="panelVisible"> 
               <q-list>
                 <q-list-header class="row justify-between">
-                  <h6>设备{{currentName}}</h6>
+                  <h6>{{currentName}}</h6>
                   <q-icon name="close" @click="panelVisible = false" />
                   </q-list-header>
                   <q-item-separator />
@@ -240,10 +240,13 @@ export default {
       let self = this;
       let idx = 0;
       for (let i = 0; i < this.deviceLocation.length; i++) {
-        if(!LocalStorage.has(this.deviceLocation[i].id)){
-          this.setAddressText(this.deviceLocation[i].id,[this.deviceLocation[i].long, this.deviceLocation[i].lat])
+        if (!LocalStorage.has(this.deviceLocation[i].id)) {
+          this.setAddressText(this.deviceLocation[i].id, [
+            this.deviceLocation[i].long,
+            this.deviceLocation[i].lat
+          ]);
         }
-        
+
         markers.push({
           id: this.deviceLocation[i].id,
           position: [this.deviceLocation[i].long, this.deviceLocation[i].lat],
@@ -309,7 +312,6 @@ export default {
           LocalStorage.set(id, result.regeocode.formattedAddress);
         }
       });
-      
     },
     getDataList: function() {
       if (this.panelVisible && this.deviceId) {
@@ -321,12 +323,16 @@ export default {
             for (let i = 0; i < dataListType.length; i++) {
               let type = dataListType[i];
               if (lastData[type] >= 0 && dataFormatService[type]) {
-                list.push({
+                let item = {
                   type: type,
                   data: lastData[type],
                   name: dataFormatService[type].name,
                   level: dataFormatService[type].getLevelText(lastData[type])
-                });
+                };
+                if (type === "temperature" || type === "humidity") {
+                  item.data = item.data / 100;
+                }
+                list.push(item);
               }
             }
             this.dataList = list;

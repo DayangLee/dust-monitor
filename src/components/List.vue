@@ -269,7 +269,7 @@ export default {
         width: "80px",
         format(value, row) {
           if (value || value === 0) {
-            return value + "℃";
+            return (value/100).toFixed(0) + "℃";
           } else {
             return value;
           }
@@ -283,7 +283,7 @@ export default {
         width: "80px",
         format(value, row) {
           if (value || value === 0) {
-            return value + "%";
+            return (value/100).toFixed(0) + "%";
           } else {
             return value;
           }
@@ -296,10 +296,12 @@ export default {
         type: "number",
         width: "80px",
         format(value, row) {
-          if (value || value === 0) {
-            return value + "m/s";
+          if (value) {
+            return (value/10).toFixed(1) + "m/s";
+          } else if(value === 0){
+            return value + 'm/s';
           } else {
-            return value;
+            return value
           }
         }
       },
