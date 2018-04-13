@@ -78,11 +78,33 @@
                   <q-item-side right><div class="rank text-white" :style="{backgroundColor: aqiColor}">{{aqiLevel}}</div></q-item-side>
                 </q-item>
                 <q-item-separator />
-                <q-list-header>设备数据</q-list-header>
+                <q-list-header style="font-weight:600;">设备数据</q-list-header>
                 <q-item v-for="(item,index) in dataList" :key="index">
                   <q-item-side style="width: 20%;">{{item.name}}</q-item-side>
-                  <q-item-main>{{item.data.toFixed(0)}}</q-item-main>
-                  <q-item-side>{{item.level}}</q-item-side>
+                  <q-item-main>
+                    <div class="backBar">
+                      <span class="dataBar" :style="{width: item.width + '%', backgroundColor:item.color}"></span>
+                    </div>
+                  </q-item-main>
+                  <q-item-side style="width: 35%;">
+                    {{item.data.toFixed(0)}} {{item.unit}}
+                  </q-item-side>
+                </q-item>
+                <q-item-separator />
+                <q-list-header style="font-weight:600;">室外数据</q-list-header>
+                <q-item>
+                  <q-item-side style="width: 20%;">PM2.5</q-item-side>
+                  <q-item-main class="text-center">{{outData.pm2d5.data}}</q-item-main>
+                  <q-item-side style="width: 30%"> 
+                    <div class="text-center" style="color:white;width:100%;border-radius:8px;padding: 2px;" :style="{backgroundColor:outData.pm2d5.color}">{{outData.pm2d5.level}}</div>
+                  </q-item-side>
+                </q-item>
+                <q-item>
+                  <q-item-side style="width: 20%;">PM10</q-item-side>
+                  <q-item-main class="text-center">{{outData.pm10.data}}</q-item-main>
+                  <q-item-side style="width: 30%"> 
+                    <div class="text-center" style="color:white;width:100%;border-radius:8px;padding: 2px;" :style="{backgroundColor:outData.pm10.color}">{{outData.pm10.level}}</div>
+                  </q-item-side>
                 </q-item>
                 <q-item><q-item-main class="text-center"><q-btn color="primary" @click="status = 1">查看详情</q-btn></q-item-main></q-item>
               </q-list>
@@ -101,7 +123,7 @@
 
 <script>
 import { LocalStorage } from "quasar";
-import { deviceService } from "api/index";
+import { deviceService, weatherService } from "api/index";
 import { dataFormatService } from "../lib/dataFormat";
 import devicePanel from "./Device";
 export default {
@@ -134,6 +156,18 @@ export default {
     addressInfo: null,
     panelVisible: false,
     dataList: [],
+    outData: {
+      pm2d5: {
+        data: null,
+        color: "rgba(136,136,136,.6)",
+        level: "--"
+      },
+      pm10: {
+        data: null,
+        color: "rgba(136,136,136,.6)",
+        level: "--"
+      }
+    },
     aqi: null,
     aqiLevel: "--",
     aqiColor: "rgba(136,136,136,.6)"
@@ -268,6 +302,7 @@ export default {
               self.currentName = markers[i].name;
               self.currentId = self.deviceAdapterIdMap.get(markers[i].id);
               self.getDataList();
+              self.getLocation(markers[i].position);
             },
             mouseover() {
               self.mouseoverDeviceId = markers[i].id;
@@ -326,11 +361,16 @@ export default {
                 let item = {
                   type: type,
                   data: lastData[type],
+                  width: dataFormatService[type].getPercentage(lastData[type]),
+                  color: dataFormatService[type].getColor(lastData[type]),
                   name: dataFormatService[type].name,
-                  level: dataFormatService[type].getLevelText(lastData[type])
+                  unit: dataFormatService[type].unit
+                  // level: dataFormatService[type].getLevelText(lastData[type])
                 };
                 if (type === "temperature" || type === "humidity") {
                   item.data = item.data / 100;
+                  item.width = dataFormatService[type].getPercentage(item.data);
+                  item.color = dataFormatService[type].getColor(item.data);
                 }
                 list.push(item);
               }
@@ -345,6 +385,65 @@ export default {
           }
         });
       }
+    },
+    getLocation(position) {
+      deviceService.getDeviceConfig(this.deviceId).then(r => {
+        if (r.data && r.data.weatherId) {
+          this.getOutData(r.data.weatherId);
+        } else {
+          this.setLocation(position);
+        }
+      });
+    },
+    getOutData(stationId) {
+      let cityId;
+      if (stationId.indexOf(":") !== -1) {
+        cityId = stationId.split(":")[0];
+      } else {
+        cityId = stationId;
+      }
+      weatherService.getCurrentAir(cityId).then(r => {
+        if (r.data && r.data.content) {
+          let content = r.data.content;
+          for (let i = 0; i < content.length; i++) {
+            if (content[i].id === stationId) {
+              this.outData.pm2d5.data = content[
+                i
+              ].data.air[0].data.pm25.toFixed(0);
+              this.outData.pm2d5.level = dataFormatService.pm2d5.getLevelText(
+                this.outData.pm2d5.data
+              );
+              this.outData.pm2d5.color = dataFormatService.pm2d5.getColor(
+                this.outData.pm2d5.data
+              );
+              this.outData.pm10.data = content[i].data.air[0].data.pm10.toFixed(
+                0
+              );
+              this.outData.pm10.level = dataFormatService.pm10.getLevelText(
+                this.outData.pm10.data
+              );
+              this.outData.pm10.color = dataFormatService.pm10.getColor(
+                this.outData.pm10.data
+              );
+            }
+          }
+        }
+      });
+    },
+    setLocation(position) {
+      const that = this;
+      weatherService
+        .getWeatherId(position[0], position[1])
+        .then(r => {
+          let weatherId = r.data.content[0].id;
+          deviceService
+            .changeDeviceConfig(this.deviceId, "weatherId", weatherId)
+            .then(r => {
+              that.getOutData(weatherId)
+            })
+            .catch(e => {});
+        })
+        .catch(e => {});
     }
   },
   created() {
@@ -356,6 +455,7 @@ export default {
 
 <style lang="stylus" scoped>
 .map
+  font-family 'Microsoft YaHei' !important
   .title
     margin-bottom 20px
   .amap-wrapper
@@ -369,4 +469,21 @@ export default {
   .rank
     padding 2px 8px
     border-radius 4px
+  .backBar
+    width 100%
+    height 0.6vh
+    background-color #eeeeee
+    border-radius 5px
+    margin 0 auto
+    position relative
+    z-index 10
+    .dataBar
+      z-index 99
+      height 100%
+      width 40%
+      position absolute
+      left 0
+      top 0
+      border-radius 5px
+      background-color RGBA(229, 218, 48, 1)
 </style>
